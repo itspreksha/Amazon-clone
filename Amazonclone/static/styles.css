@@ -1,0 +1,131 @@
+/* General Reset & Defaults */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f7f7f7;
+    margin: 0;
+    padding: 0;
+}
+
+/* Navbar Styling */
+nav.navbar {
+    background-color: #131921 !important;
+    color: white;
+}
+
+.navbar-brand {
+    font-size: 1.8rem;
+    color: #f3a847 !important;
+}
+
+.navbar input.form-control {
+    border-radius: 0;
+}
+
+.navbar .btn-warning {
+    border-radius: 0;
+    background-color: #f3a847;
+    border: none;
+}
+
+.navbar .btn-warning:hover {
+    background-color: #dd9c2b;
+}
+
+.navbar .text-end small {
+    font-size: 0.75rem;
+    color: #ccc;
+}
+
+.navbar .text-end strong {
+    font-size: 0.85rem;
+    color: white;
+}
+
+/* Cart icon spacing */
+.navbar .bi-cart {
+    font-size: 1.4rem;
+}
+
+/* Banner Image */
+.card img {
+    height: 150px;
+    object-fit: contain;
+}
+
+.badge {
+    font-size: 0.9rem;
+    padding: 0.4em 0.6em;
+}
+.carousel-item img {
+    max-height: 100%;
+    object-fit: cover;
+}
+/* Product Cards */
+.product-card {
+    border: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    height: 100%;
+}
+
+.product-card:hover {
+    transform: scale(1.03);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+.product-card img {
+    height: 220px;
+    object-fit: contain;
+    padding: 10px;
+    background-color: white;
+}
+
+/* Titles */
+.card-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #222;
+}
+
+.card-text.text-danger {
+    font-weight: bold;
+}
+
+/* Category Section */
+.category-icon {
+    font-size: 2rem;
+    color: #f3a847;
+}
+.categoryname{
+    color:white;
+    text-align: center;
+}
+/* Responsive Tweaks */
+@media (max-width: 768px) {
+    .navbar .d-none.d-md-block {
+        display: none !important;
+    }
+
+    .navbar .d-none.d-md-flex {
+        display: none !important;
+    }
+
+    .navbar .container-fluid {
+        flex-wrap: wrap;
+    }
+
+    .navbar .input-group {
+        flex-grow: 1;
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    .navbar .d-flex.align-items-center.gap-4 {
+        gap: 1rem;
+        justify-content: space-between;
+        width: 100%;
+        margin-top: 10px;
+    }
+}
+.footer{
+    background-color: #222;
+}
