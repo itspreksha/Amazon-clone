@@ -27,8 +27,6 @@ def home(request):
   paginator=Paginator(products,6)
   products_page=paginator.get_page(page)
   
-
-
   categories=[
     {'name': 'Mobiles'},
     {'name': 'Books'},
