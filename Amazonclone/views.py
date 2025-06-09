@@ -1,7 +1,32 @@
-from django.shortcuts import render,redirect
+from django.shortcuts import render,redirect,get_object_or_404
+from .models import Product
+from django.core.paginator import Paginator
 
 # Create your views here.
 def home(request):
+  products=Product.objects.all()
+
+  category=request.GET.get('category')
+  search=request.GET.get('search')
+  sort=request.GET.get('sort')
+  page=request.GET.get('page',1)
+  
+  if category:
+    products=products.filter(category=category)
+  
+  if search:
+    products=products.filter(name__icontains=search)
+
+  if sort=='price_asc':
+    products=products.order_by('price')
+  elif sort=='price_desc':
+     products=products.order_by('-price')
+  else:
+    products=products.order_by('-created_at')
+
+  paginator=Paginator(products,6)
+  products_page=paginator.get_page(page)
+  
   categories=[
     {'name': 'Mobiles'},
     {'name': 'Books'},
@@ -39,7 +64,6 @@ def home(request):
         {'name': 'Dell Laptop Bag', 'price': '₹999', 'img': 'images/delllaptopbag.jpg', 'discount': '50% Off'},
     ]
 
-
   context = {
         'categories': categories,
         'featured_products': featured_products,
@@ -47,6 +71,22 @@ def home(request):
         'trending_items': trending_items,
         'deals': deals,
         'deals_of_day': deals_of_day,
+        'products':products_page,
+        'paginator':paginator,
     }
     
   return render(request, 'Amazonclone/home.html', context)
+  
+def product_detail(request):
+    product_id = request.GET.get('id')
+
+    if product_id:
+        try:
+            product = Product.objects.get(id=product_id)
+        except product.DoesNotExist:
+            return render(request, 'Amazonclone/product_not_found.html', status=404)
+        return render(request, 'Amazonclone/product_detail.html', {'product': product})
+    else:
+        return render(request, 'Amazonclone/product_not_found.html', status=400)
+
+
