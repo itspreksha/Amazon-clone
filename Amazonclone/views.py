@@ -90,3 +90,71 @@ def product_detail(request):
         return render(request, 'Amazonclone/product_not_found.html', status=400)
 
 
+def add_to_cart(request,product_id):
+   cart=request.session.get('cart',{})
+
+   if str(product_id) in cart:
+      cart[str(product_id)]+=1
+   else:
+      cart[str(product_id)]=1
+
+   request.session['cart']=cart
+   return redirect('cart_view')
+
+def remove_from_cart(request,product_id):
+   cart=request.session.get('cart',{})
+   if str(product_id) in cart:
+      del cart[str(product_id)]
+   request.session['cart']=cart
+   return redirect('cart_view')
+
+def update_cart(request, product_id):
+    if request.method == 'POST':
+        try:
+            quantity = int(request.POST.get('quantity', 1))
+            if quantity < 1:
+                quantity = 1  
+        except ValueError:
+            quantity = 1
+
+        cart = request.session.get('cart', {})
+        cart[str(product_id)] = quantity
+        request.session['cart'] = cart
+    return redirect('cart_view')
+
+
+def cart_view(request):
+    cart = request.session.get('cart', {})
+    product_ids = cart.keys()
+
+    products = Product.objects.filter(id__in=product_ids)
+
+    cart_items = []
+    subtotal = 0
+
+    for product in products:
+        quantity = cart.get(str(product.id), 1)  
+        total_price = product.price * quantity
+        subtotal += total_price
+
+        cart_items.append({
+            'product': product,
+            'quantity': quantity,
+            'total_price': total_price
+        })
+
+    estimated_shipping = 50 if subtotal else 0
+    total = subtotal + estimated_shipping
+
+    context = {
+        'cart_items': cart_items,
+        'subtotal': subtotal,
+        'estimated_shipping': estimated_shipping,
+        'total': total,
+    }
+
+    return render(request, 'Amazonclone/cart.html', context)
+
+def get_cart_item_count(request):
+    cart = request.session.get('cart', {})
+    return sum(cart.values())
