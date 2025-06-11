@@ -137,7 +137,6 @@ SOCIALACCOUNT_PROVIDERS = {
         'APP': {
             'client_id': config('GOOGLE_CLIENT_ID'),
             'secret': config('GOOGLE_CLIENT_SECRET'),
-            'key': '' # Not typically used for Google OAuth2
         }
     }
 }
