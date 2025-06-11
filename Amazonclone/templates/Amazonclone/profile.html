@@ -1,0 +1,14 @@
+{% extends "Amazonclone/base.html" %}
+
+{% block title %}Your Profile{% endblock %}
+
+{% block content %}
+<div class="container mt-5" style="max-width:600px;">
+    <h2 class="mb-4 text-center text-warning">Your Profile</h2>
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-warning w-100">Update</button>
+    </form>
+</div>
+{% endblock %}
