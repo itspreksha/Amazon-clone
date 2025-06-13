@@ -25,9 +25,21 @@ class Profile(models.Model):
     phone = models.CharField(max_length=15, blank=True)
     address = models.TextField(blank=True)
     city = models.CharField(max_length=100, blank=True)
+    otp = models.CharField(max_length=6, blank=True, null=True)
+    email_verified = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.user.username}'s Profile"
+
+class OTPVerification(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    otp = models.CharField(max_length=6)
+    expires_at = models.DateTimeField()
+    verified = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.user.username} - OTP"
+
 class Order(models.Model):
     user=models.ForeignKey(User,on_delete=models.CASCADE)
     order_date=models.DateTimeField(auto_now_add=True)

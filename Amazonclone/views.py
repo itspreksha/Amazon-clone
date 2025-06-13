@@ -1,22 +1,27 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Product, Order
 from django.core.paginator import Paginator
-from django.contrib.auth.models import User
-from django.contrib.auth import login
+from django.contrib.auth import login, logout, authenticate, update_session_auth_hash, get_backends, get_user_model
 from django.contrib.auth.decorators import login_required
-from .forms import ProfileForm, RegisterForm
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from django.contrib.auth import login, logout, authenticate, update_session_auth_hash
+from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm,UserCreationForm
 from django.contrib import messages
-from .models import Profile
-from django.contrib.auth.forms import PasswordChangeForm
+from .forms import RegisterForm, ProfileForm,LoginForm
+from .models import Profile, OTPVerification, Product, Order
 from django.core.mail import send_mail
-from django.utils.http import urlsafe_base64_encode
-from django.utils.encoding import force_bytes
-from django.contrib.auth.tokens import default_token_generator
+from django.utils import timezone
+from datetime import timedelta
+import random
+from allauth.account.models import EmailAddress
 
 
 def home(request):
+    # No redirect — just check if logged in, and optionally show email warning
+    email_warning = None
+    if request.user.is_authenticated:
+        verified = EmailAddress.objects.filter(user=request.user, verified=True).exists()
+        if not verified:
+            email_warning = "Please verify your email to access full features."
+
+    # Fetch product filters and pagination
     products = Product.objects.all()
     category = request.GET.get('category')
     search = request.GET.get('search')
@@ -25,10 +30,8 @@ def home(request):
 
     if category:
         products = products.filter(category=category)
-
     if search:
         products = products.filter(name__icontains=search)
-
     if sort == 'price_asc':
         products = products.order_by('price')
     elif sort == 'price_desc':
@@ -43,8 +46,6 @@ def home(request):
         {'name': 'Mobiles'}, {'name': 'Books'}, {'name': 'Watches'},
         {'name': 'Shoes'}, {'name': 'Fashion'}, {'name': 'Electronics'},
     ]
-
-    # ✅ Combine product sections into a list of tuples (title, items)
     product_sections = [
         ('Featured Products', [
             {'name': 'iPhone 16', 'price': '₹73,500', 'img': 'images/iphone16.jpg'},
@@ -57,13 +58,13 @@ def home(request):
         ]),
         ('Trending Items', [
             {'name': 'Noise Airwave Max5', 'price': '₹4,999', 'img': 'images/Bluetooth.jpg'},
-            {'name': 'Levi\'s Jeans', 'price': '₹1,799', 'img': 'images/levisjeans.jpg'},
+            {'name': "Levi's Jeans", 'price': '₹1,799', 'img': 'images/levisjeans.jpg'},
         ])
     ]
 
     context = {
         'categories': categories,
-        'product_sections': product_sections,  
+        'product_sections': product_sections,
         'deals': [
             {'banner_img': 'images/dealoftheday1.png'},
             {'banner_img': 'images/dealoftheday2.png'},
@@ -75,8 +76,8 @@ def home(request):
         ],
         'products': products_page,
         'paginator': paginator,
+        'email_warning': email_warning,
     }
-
     return render(request, 'Amazonclone/home.html', context)
 
 def product_detail(request):
@@ -89,20 +90,17 @@ def product_detail(request):
             return render(request, 'Amazonclone/product_not_found.html', status=404)
     return render(request, 'Amazonclone/product_not_found.html', status=400)
 
-
 def add_to_cart(request, product_id):
     cart = request.session.get('cart', {})
     cart[str(product_id)] = cart.get(str(product_id), 0) + 1
     request.session['cart'] = cart
     return redirect('cart_view')
 
-
 def remove_from_cart(request, product_id):
     cart = request.session.get('cart', {})
     cart.pop(str(product_id), None)
     request.session['cart'] = cart
     return redirect('cart_view')
-
 
 def update_cart(request, product_id):
     if request.method == 'POST':
@@ -112,21 +110,17 @@ def update_cart(request, product_id):
                 quantity = 1
         except ValueError:
             quantity = 1
-
         cart = request.session.get('cart', {})
         cart[str(product_id)] = quantity
         request.session['cart'] = cart
     return redirect('cart_view')
 
-
 def cart_view(request):
     cart = request.session.get('cart', {})
     product_ids = cart.keys()
     products = Product.objects.filter(id__in=product_ids)
-
     cart_items = []
     subtotal = 0
-
     for product in products:
         quantity = cart.get(str(product.id), 1)
         total_price = product.price * quantity
@@ -136,10 +130,8 @@ def cart_view(request):
             'quantity': quantity,
             'total_price': total_price
         })
-
     estimated_shipping = 50 if subtotal else 0
     total = subtotal + estimated_shipping
-
     return render(request, 'Amazonclone/cart.html', {
         'cart_items': cart_items,
         'subtotal': subtotal,
@@ -147,41 +139,112 @@ def cart_view(request):
         'total': total,
     })
 
-
 def get_cart_item_count(request):
     return sum(request.session.get('cart', {}).values())
 
+def generate_otp():
+    return str(random.randint(100000, 999999))
 
 def register_view(request):
+    if request.user.is_authenticated:
+        return redirect('home')
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)  # or use your custom RegisterForm
+        form = RegisterForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            token = default_token_generator.make_token(user)
-            uid = urlsafe_base64_encode(force_bytes(user.pk))
-            activation_link = f"http://yourdomain.com/activate/{uid}/{token}/"
-
+            user = form.save(commit=False)
+            user.is_active = False
+            user.save()
+            otp = generate_otp()
+            OTPVerification.objects.update_or_create(
+                user=user,
+                defaults={
+                    'otp': otp,
+                    'expires_at': timezone.now() + timedelta(minutes=2),
+                    'verified': False
+                }
+            )
             send_mail(
-                 'Verify your email',
-                 f'Click here to verify your email: {activation_link}',
-                 'no-reply@yourdomain.com',
-                 [user.email],
-                )
+                'Your OTP Verification Code',
+                f'Your OTP is: {otp}',
+                'no-reply@yourdomain.com',
+                [user.email],
+            )
+            request.session['otp_user_id'] = user.id
+            return redirect('verify_otp')
+    else:
+        form = RegisterForm()
+    return render(request, 'Amazonclone/register.html', {'form': form})
+
+User = get_user_model()
+
+def verify_otp_view(request):
+    user_id = request.session.get('otp_user_id')
+    if not user_id:
+        return redirect('register')
+
+    try:
+        user = User.objects.get(id=user_id)
+        otp_record = OTPVerification.objects.get(user=user)
+    except (User.DoesNotExist, OTPVerification.DoesNotExist):
+        return redirect('register')
+
+    if request.method == 'POST':
+        entered_otp = request.POST.get('userOTP', '').strip()
+        stored_otp = str(otp_record.otp).strip()
+
+        if entered_otp == stored_otp and otp_record.expires_at > timezone.now():
+            otp_record.verified = True
+            otp_record.save()
+            user.is_active = True
+            user.save()
+
+            # Set backend manually since user is not authenticated via authenticate()
+            from django.contrib.auth import get_backends
+            user.backend = get_backends()[0].__module__ + "." + get_backends()[0].__class__.__name__
             login(request, user)
-            messages.success(request, "Registration successful.")
+
+            del request.session['otp_user_id']
             return redirect('home')
         else:
-            messages.error(request, "Registration failed. Please correct the errors below.")
-    else:
-        form = UserCreationForm()
+            return render(request, 'Amazonclone/verify_otp.html', {
+                'otpError': 'Invalid or expired OTP'
+            })
 
-    return render(request, 'Amazonclone/register.html', {'form': form})
+    return render(request, 'Amazonclone/verify_otp.html')
+
+
+
+
+def resend_otp(request):
+    user_id = request.session.get('otp_user_id')
+    if not user_id:
+        messages.error(request, "Session expired. Please register again.")
+        return redirect('register')
+    user = User.objects.get(id=user_id)
+    new_otp = str(random.randint(100000, 999999))
+    expiration_time = timezone.now() + timedelta(minutes=2)
+    OTPVerification.objects.update_or_create(
+        user=user,
+        defaults={'otp': new_otp, 'expires_at': expiration_time, 'verified': False}
+    )
+    send_mail(
+        'Your OTP Code',
+        f'Your OTP is: {new_otp}',
+        'no-reply@example.com',
+        [user.email],
+        fail_silently=False,
+    )
+    messages.success(request, "A new OTP has been sent to your email.")
+    return redirect('verify_otp')
+
+def session_expired(request):
+    return render(request, 'session_expired.html', {
+        'message': 'Your session has expired. Please try again.',
+    })
 
 @login_required
 def profile_view(request):
-    # Ensure the profile exists
     profile, created = Profile.objects.get_or_create(user=request.user)
-
     if request.method == 'POST':
         form = ProfileForm(request.POST, instance=profile)
         if form.is_valid():
@@ -189,43 +252,41 @@ def profile_view(request):
             messages.success(request, "Profile updated successfully.")
     else:
         form = ProfileForm(instance=profile)
-
     return render(request, 'Amazonclone/profile.html', {'form': form})
-
 
 @login_required
 def order_history(request):
     orders = Order.objects.filter(user=request.user).prefetch_related('orderitem_set')
     return render(request, 'Amazonclone/order_history.html', {'orders': orders})
 
-
 @login_required
 def reorder(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
     cart = request.session.get('cart', {})
-
     for item in order.orderitem_set.all():
         cart[str(item.product.id)] = item.quantity
-
     request.session['cart'] = cart
     return redirect('cart_view')
 
 def login_view(request):
     if request.method == 'POST':
-        form = AuthenticationForm(data=request.POST)
+        form = LoginForm(request.POST)
         if form.is_valid():
-            user = form.get_user()
-            login(request, user)
-            messages.success(request, "Logged in successfully.")
-            return redirect('home')
-        else:
-            messages.error(request, "Invalid credentials. Please try again.")
+            username = form.cleaned_data.get("username")
+            password = form.cleaned_data.get("password")
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                if not user.is_active:
+                    messages.error(request, "Your account is not verified. Please check your email.")
+                    return redirect('login')
+                login(request, user)
+                messages.success(request, "Login successful!")
+                return redirect('home')
+            else:
+                messages.error(request, "Invalid username or password.")
     else:
-        form = AuthenticationForm()
-
+        form = LoginForm()
     return render(request, 'Amazonclone/login.html', {'form': form})
-
-
 
 @login_required
 def update_password_view(request):
@@ -233,14 +294,13 @@ def update_password_view(request):
         form = PasswordChangeForm(user=request.user, data=request.POST)
         if form.is_valid():
             user = form.save()
-            update_session_auth_hash(request, user)  # Keeps user logged in
+            update_session_auth_hash(request, user)
             messages.success(request, "Password updated successfully.")
             return redirect('profile')
         else:
             messages.error(request, "Please correct the errors below.")
     else:
         form = PasswordChangeForm(user=request.user)
-
     return render(request, 'Amazonclone/update_password.html', {'form': form})
 
 def logout_view(request):

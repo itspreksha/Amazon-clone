@@ -100,6 +100,7 @@ DATABASES = {
         'PORT': config('DB_PORT', cast=int),
     }
 }
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # (default)
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -122,12 +123,13 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-
-# Django-Allauth settings
-LOGIN_REDIRECT_URL = '/'
-ACCOUNT_EMAIL_VERIFICATION = 'none' # Set to 'mandatory' for email verification
-ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
+ACCOUNT_EMAIL_VERIFICATION = 'none'
 ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_CONFIRM_EMAIL_ON_GET = True  # Optional: confirm by clicking
+LOGIN_REDIRECT_URL = '/'
+ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
+ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/login/'
+
 
 # Social Account Providers for django-allauth
 SOCIALACCOUNT_PROVIDERS = {

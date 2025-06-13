@@ -9,9 +9,16 @@
  
 <div class="container mt-5" style="max-width:500px;">
     <h2 class="mb-4 text-center text-warning">Create Your Amazon Account</h2>
-    <form method="post" action="/signup" novalidate>
+    {% if messages %}
+  {% for message in messages %}
+    <div class="alert alert-warning">{{ message }}</div>
+  {% endfor %}
+{% endif %}
+
+   <form method="post" action="{% url 'register' %}">
         {% csrf_token %}
         {{form.as_p}}
+        
         <button type="submit" class="btn btn-warning w-100">Continue</button>
       <a href="{% provider_login_url 'google' %}">Login with Google</a>
 
