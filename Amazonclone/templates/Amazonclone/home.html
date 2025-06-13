@@ -62,28 +62,29 @@
     </form>
 
     <!-- Account Info -->
-    <div class="d-flex align-items-center gap-4 text-white">
-      <div class="text-end">
-        <div class="small">Hello, {% if user.is_authenticated %}{{ user.username }}{% else %}Sign in{% endif %}</div>
-        {% if user.is_authenticated %}
-          <a href="{% url 'profile' %}" class="text-white text-decoration-none"><strong>Account & Lists</strong></a><br>
-          <a href="{% url 'logout' %}" class="text-white text-decoration-none"><small>Logout</small></a>
-        {% else %}
-          <a href="{% url 'login' %}" class="text-white text-decoration-none"><strong>Account & Lists</strong></a>
-        {% endif %}
-      </div>
+<div class="d-flex align-items-center gap-4 text-white">
+  <div class="text-end">
+    {% if user.is_authenticated %}
+      Hello, {{ user.username }} <br>
+      <a href="/logout/" class="text-white text-decoration-none">Logout</a>
+    {% else %}
+      Hello, <a href="/login/" class="text-white text-decoration-none">Sign in</a><br>
+      <a href="/login/" class="text-white text-decoration-none">Account & Lists</a>
+    {% endif %}
+  </div>
 
-      <div class="text-end">
-        <div class="small">Returns</div>
-        <a href="{% url 'order_history' %}" class="text-white text-decoration-none"><strong>& Orders</strong></a>
-      </div>
+  <div class="text-end">
+    <div class="small">Returns</div>
+    <a href="/orders/" class="text-white text-decoration-none"><strong>& Orders</strong></a>
+  </div>
 
-      <div class="text-end d-flex align-items-center">
-        <a href="{% url 'cart_view' %}" class="text-white text-decoration-none">
-          <i class="bi bi-cart fs-4 me-1"></i><strong>Cart</strong>
-        </a>
-      </div>
-    </div>
+  <div class="text-end d-flex align-items-center">
+    <a href="/cart/" class="text-white text-decoration-none">
+      <i class="bi bi-cart fs-4 me-1"></i><strong>Cart</strong>
+    </a>
+  </div>
+</div>
+
 
     <!-- Language -->
     <div class="dropdown d-flex align-items-center ms-3">
