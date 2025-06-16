@@ -10,9 +10,13 @@ from django.core.mail import send_mail
 from django.utils import timezone
 from datetime import timedelta
 import random
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
 from allauth.account.models import EmailAddress
-
-
+from django.urls import reverse_lazy
+from django.contrib.auth.views import PasswordResetView
+from django.contrib.auth import update_session_auth_hash
+from .models import Order,OrderItem
 def home(request):
     # No redirect — just check if logged in, and optionally show email warning
     email_warning = None
@@ -213,8 +217,6 @@ def verify_otp_view(request):
     return render(request, 'Amazonclone/verify_otp.html')
 
 
-
-
 def resend_otp(request):
     user_id = request.session.get('otp_user_id')
     if not user_id:
@@ -243,7 +245,7 @@ def session_expired(request):
     })
 
 @login_required
-def profile_view(request):
+def view_profile(request):
     profile, created = Profile.objects.get_or_create(user=request.user)
     if request.method == 'POST':
         form = ProfileForm(request.POST, instance=profile)
@@ -260,13 +262,19 @@ def order_history(request):
     return render(request, 'Amazonclone/order_history.html', {'orders': orders})
 
 @login_required
-def reorder(request, order_id):
-    order = get_object_or_404(Order, id=order_id, user=request.user)
-    cart = request.session.get('cart', {})
-    for item in order.orderitem_set.all():
-        cart[str(item.product.id)] = item.quantity
-    request.session['cart'] = cart
-    return redirect('cart_view')
+def reorder(request,order_id):
+    old_order=get_object_or_404(Order,id=order_id,user=request.user)
+    new_order=Order.objects.create(user=request.user,status='Pending',total_price=old_order.total_price)
+    for item in OrderItem.objects.filter(order=old_order):
+        OrderItem.objects.create(
+            order=new_order,
+            product_name=item.product_name,
+            price=item.price,
+            quantity=item.quantity
+        )
+    messages.success(request,f"Order#{order_id}has been re-ordered successfully.")
+    return redirect('order_history')
+
 
 def login_view(request):
     if request.method == 'POST':
@@ -296,14 +304,66 @@ def update_password_view(request):
             user = form.save()
             update_session_auth_hash(request, user)
             messages.success(request, "Password updated successfully.")
-            return redirect('profile')
+            return redirect('view_profile')
         else:
             messages.error(request, "Please correct the errors below.")
     else:
         form = PasswordChangeForm(user=request.user)
-    return render(request, 'Amazonclone/update_password.html', {'form': form})
+    return render(request, 'Amazonclone/change_password.html', {'form': form})
 
 def logout_view(request):
     logout(request)
     messages.success(request, "Logged out successfully.")
     return redirect('home')
+
+class CustomPasswordResetView(PasswordResetView):
+    template_name = 'Amazonclone/password_reset_form.html'
+    email_template_name = 'Amazonclone/password_reset_email.html'
+    subject_template_name = 'Amazonclone/password_reset_subject.txt'
+    success_url = reverse_lazy('password_reset_done')
+
+    def form_valid(self, form):
+        form.save(
+            request=self.request,
+        )
+        return super().form_valid(form)
+
+
+@login_required
+def edit_profile(request):
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+    if request.method == 'POST':
+        request.user.username = request.POST.get('name', '')
+        request.user.email = request.POST.get('email', '')
+        profile.phone = request.POST.get('phone', '')
+        profile.address = request.POST.get('address', '')  
+        profile.city = request.POST.get('city', '')
+        request.user.save()
+        profile.save()
+        messages.success(request, "Profile updated successfully.")
+        return redirect('view_profile')
+    return render(request, 'Amazonclone/edit_profile.html', {'profile': profile})
+
+
+@login_required
+def change_password(request):
+    if request.method == 'POST':
+        form = PasswordChangeForm(user=request.user, data=request.POST)
+        if form.is_valid():
+            form.save()
+            update_session_auth_hash(request, form.user)
+            messages.success(request, "Password changed successfully.")
+            return redirect('view_profile')
+    else:
+        form = PasswordChangeForm(user=request.user)
+        return render(request, 'Amazonclone/change_password.html', {'form': form})
+    
+@login_required
+def view_orders(request):
+    orders = Order.objects.filter(user=request.user, is_ordered=True)
+    return render(request, 'Amazonclone/orders.html',{'orders':orders})
+
+@property
+def total_price(self):
+    return sum(item.quantity * item.price for item in self.items.all())
+
