@@ -1,16 +1,13 @@
 from pathlib import Path
-from decouple import config
+from decouple import config, Csv
 
-# <-- IMPORTANT: Import Csv directly here
-
-# Base directory of the project
+# Base directory
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Security settings
+# Security
 DEBUG = config('DEBUG', default=True, cast=bool)
-SECRET_KEY = config('SECRET_KEY', default='fallback-secret-key-for-dev')
-# IMPORTANT: Now you can use Csv() directly, without config.
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='').split(',')
+SECRET_KEY = config('SECRET_KEY')
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost', cast=Csv())
 
 # Application definition
 INSTALLED_APPS = [
@@ -21,7 +18,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.sites', # django.contrib.sites is required by allauth
+    'django.contrib.sites',
 
     # Third-party apps
     'allauth',
@@ -34,21 +31,20 @@ INSTALLED_APPS = [
     # Local apps
     'Amazonclone',
 ]
+
 SITE_ID = 1
- # Required by django.contrib.sites and allauth
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'http'
 
-# Authentication
-AUTHENTICATION_BACKENDS = (
-    # 'social_core.backends.google.GoogleOAuth2', # Remove this if using allauth for Google login
+
+AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend', # Add allauth's backend
-)
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
 
-# Crispy Forms config
-CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+# Crispy Forms
+CRISPY_ALLOWED_TEMPLATE_PACKS ="bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
-# Middleware
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -70,7 +66,7 @@ TEMPLATES = [
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
-                'django.template.context_processors.request',  # Required by allauth
+                'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
@@ -78,16 +74,15 @@ TEMPLATES = [
     },
 ]
 
-# Email settings
+WSGI_APPLICATION = 'Amazon.wsgi.application'
+
+
 EMAIL_BACKEND = config('EMAIL_BACKEND')
 EMAIL_HOST = config('EMAIL_HOST')
-EMAIL_PORT = config('EMAIL_PORT')
-EMAIL_USE_TLS = config('EMAIL_USE_TLS')
+EMAIL_PORT = config('EMAIL_PORT', cast=int)
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', cast=bool)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
-
-
-WSGI_APPLICATION = 'Amazon.wsgi.application'
 
 # Database
 DATABASES = {
@@ -100,7 +95,8 @@ DATABASES = {
         'PORT': config('DB_PORT', cast=int),
     }
 }
-SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # (default)
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -120,18 +116,18 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
-# Default primary key field type
+# Default primary key type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Allauth configuration
 ACCOUNT_EMAIL_VERIFICATION = 'none'
 ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_CONFIRM_EMAIL_ON_GET = True  # Optional: confirm by clicking
+ACCOUNT_CONFIRM_EMAIL_ON_GET = True
 LOGIN_REDIRECT_URL = '/'
 ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
 ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/login/'
 
-
-# Social Account Providers for django-allauth
+# Social Account Provider
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'SCOPE': ['profile', 'email'],

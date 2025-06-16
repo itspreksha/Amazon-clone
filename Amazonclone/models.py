@@ -44,8 +44,12 @@ class Order(models.Model):
     user=models.ForeignKey(User,on_delete=models.CASCADE)
     order_date=models.DateTimeField(auto_now_add=True)
     status=models.CharField(max_length=20,choices=[("Pending","Pending"),("Shipped","Shipped"),("Delivered","Delivered")])
+    total_price=models.DecimalField(max_digits=10,decimal_places=2,default=0.00)
 
+    def __str__(self):
+        return f"Order #{self.id} by {self.user.username}"
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
     product_name = models.CharField(max_length=100)
-    price=models.DecimalField(max_digits=10,decimal_places=2)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    quantity = models.PositiveIntegerField(default=1) 
