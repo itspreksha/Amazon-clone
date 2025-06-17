@@ -2,7 +2,74 @@
 {% load static %}
 {% block content %}
 
-<div class="container mt-5">
+<style>
+  .product-container {
+    padding: 40px;
+    background-color: #f7f7f7;
+    border-radius: 10px;
+  }
+
+  .product-container h2 {
+    font-weight: bold;
+    color: #333;
+  }
+
+  .review-box,
+  .question-box {
+    background: white;
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  }
+
+  .review-box strong,
+  .question-box strong {
+    color: #007bff;
+  }
+
+  .review-stars {
+    color: #f5b301;
+  }
+
+  .question-answer {
+    background-color: #eafbea;
+    padding: 10px;
+    border-radius: 5px;
+    color: #2e7d32;
+    margin-top: 5px;
+  }
+
+  .question-form,
+  .review-form {
+    margin-top: 30px;
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #eee;
+  }
+
+  .related-products .card {
+    transition: transform 0.2s ease;
+  }
+
+  .related-products .card:hover {
+    transform: scale(1.03);
+  }
+
+  .btn-info, .btn-success {
+    border-radius: 25px;
+    padding: 8px 20px;
+  }
+
+  hr {
+    margin-top: 40px;
+    margin-bottom: 20px;
+  }
+</style>
+
+<div class="container product-container">
   <div class="row">
     <div class="col-md-5">
       <img src="{% static product.image.url %}" class="img-fluid rounded shadow" alt="{{ product.name }}">
@@ -16,24 +83,24 @@
 
       <form method="post" action="{% url 'add_to_cart' product.id %}">
         {% csrf_token %}
-
         {% if sizes %}
         <div class="mb-2">
           <label for="sizeSelect">Select Size:</label>
           <select id="sizeSelect" class="form-select w-50" name="size" required>
             {% for size in sizes %}
-            <option value="{{ size }}">{{ size }}</option>
-         {% endfor %}
-        </select>
+              <option value="{{ size }}">{{ size }}</option>
+            {% endfor %}
+          </select>
         </div>
         {% endif %}
 
         {% if colors %}
         <div class="mb-2">
           <label for="colorSelect">Select Color:</label>
-         {% for color in colors %}
-         <option value="{{ color }}">{{ color }}</option>
-         {% endfor %}
+          <select id="colorSelect" class="form-select w-50" name="color" required>
+            {% for color in colors %}
+              <option value="{{ color }}">{{ color }}</option>
+            {% endfor %}
           </select>
         </div>
         {% endif %}
@@ -45,90 +112,89 @@
 
         <button type="submit" class="btn btn-success">Add to Cart</button>
       </form>
-
     </div>
   </div>
 
   {% if reviews %}
-<hr>
-<h4>Customer Reviews</h4>
-{% for review in reviews %}
-  <div class="border p-3 mb-3">
-    <strong>{{ review.user.username }}</strong><br>
-    <div class="text-warning">
-      {% for _ in "12345"|make_list %}
-        {% if forloop.counter <= review.rating %}
-          ★
-        {% else %}
-          ☆
-        {% endif %}
-      {% endfor %}
-    </div>
-    <p>{{ review.comment }}</p>
-    <small class="text-muted">{{ review.created_at }}</small>
-  </div>
-{% endfor %}
-{% else %}
-  <p class="text-muted">No reviews yet.</p>
-{% endif %}
+    <hr>
+    <h4>Customer Reviews</h4>
+    {% for review in reviews %}
+      <div class="review-box">
+        <strong>{{ review.user.username }}</strong><br>
+        <div class="review-stars">
+          {% for _ in "12345"|make_list %}
+            {% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}
+          {% endfor %}
+        </div>
+        <p>{{ review.comment }}</p>
+        <small class="text-muted">{{ review.created_at }}</small>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p class="text-muted">No reviews yet.</p>
+  {% endif %}
 
-{% if user.is_authenticated %}
-<hr>
-<h4>Leave a Review</h4>
-<form method="POST">
-    {% csrf_token %}
-    {{review_form.as_p}}
-    <button type="submit" name="submit_review" class="btn btn-success">Submit Review</button>
-</form>
+  {% if user.is_authenticated %}
+    <div class="review-form">
+      <h4>Leave a Review</h4>
+      <form method="POST">
+        {% csrf_token %}
+        {{ review_form.as_p }}
+        <button type="submit" name="submit_review" class="btn btn-success">Submit Review</button>
+      </form>
+    </div>
+  {% endif %}
 
   {% if related_products %}
-  <hr>
-  <h4 class="mt-5">Related Products</h4>
-  <div class="row">
-    {% for r in related_products %}
-    <div class="col-md-3 mb-4">
-      <div class="card h-100 shadow-sm border-0">
-        <img src="{% static r.image.url %}" class="card-img-top" alt="{{ r.name }}" style="height: 200px; object-fit: cover;">
-        <div class="card-body text-center">
-          <h6>{{ r.name }}</h6>
-          <p class="text-success fw-bold">₹{{ r.price }}</p>
-          <a href="{% url 'product_detail' product_id=r.id %}" class="btn btn-outline-primary btn-sm">View</a>
+    <hr>
+    <h4 class="mt-5">Related Products</h4>
+    <div class="row related-products">
+      {% for r in related_products %}
+        <div class="col-md-3 mb-4">
+          <div class="card h-100 shadow-sm border-0">
+            <img src="{% static r.image.url %}" class="card-img-top" alt="{{ r.name }}" style="height: 200px; object-fit: cover;">
+            <div class="card-body text-center">
+              <h6>{{ r.name }}</h6>
+              <p class="text-success fw-bold">₹{{ r.price }}</p>
+              <a href="{% url 'product_detail' product_id=r.id %}" class="btn btn-outline-primary btn-sm">View</a>
+            </div>
+          </div>
         </div>
-      </div>
+      {% endfor %}
     </div>
+  {% endif %}
+
+  {% if user.is_authenticated %}
+    <div class="question-form mt-5">
+      <h4>Ask a Question</h4>
+      <form method="POST">
+        {% csrf_token %}
+        {{ question_form.as_p }}
+        <button type="submit" name="submit_question" class="btn btn-info">Submit Question</button>
+      </form>
+    </div>
+  {% else %}
+    <p><a href="{% url 'login' %}">Login</a> to post a review or ask a question</p>
+  {% endif %}
+
+  <hr>
+  <h4 class="mt-5">Questions & Answers</h4>
+  <div class="list-group">
+    {% for question in questions %}
+      <div class="question-box">
+        <strong>{{ question.user.username }}</strong> asked:
+        <p>{{ question.question_text }}</p>
+
+        {% if question.answer %}
+          <div class="question-answer"><strong>Answer:</strong> {{ question.answer }}</div>
+        {% else %}
+          <p class="text-muted"><em>No answer yet</em></p>
+        {% endif %}
+      </div>
+    {% empty %}
+      <p>No questions yet.</p>
     {% endfor %}
   </div>
-  {% endif %}
 </div>
 
-  <hr>
-  <h4>Ask a Question</h4>
-  <form method="POST">
-    {% csrf_token %}
-    {{question_form.as_p}}
-    <button type="submit" name="submit_question" class="btn btn-info">Submit Question</button>
-  </form>
-  {% else %}
-  <p><a href="{% url 'login' %}">Login</a>to post a review or ask a question</p>
-  {% endif %}
-
-
-
-<h4 class="mt-5">Questions & Answers</h4>
-<div class="list-group">
-  {% for question in questions %}
-    <div class="list-group-item">
-      <strong>{{ question.user.username }}</strong> asked:
-      <p>{{ question.question_text }}</p>
-
-      {% if question.answer %}
-        <p class="text-success"><strong>Answer:</strong> {{ question.answer }}</p>
-      {% else %}
-        <p class="text-muted"><em>No answer yet</em></p>
-      {% endif %}
-    </div>
-  {% empty %}
-    <p>No questions yet.</p>
-  {% endfor %}
-</div>
 {% endblock content %}
