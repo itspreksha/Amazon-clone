@@ -15,6 +15,12 @@ class Product(models.Model):
     category=models.CharField(max_length=100,choices=Category_choices)
     image=models.ImageField(upload_to='images/')
     created_at=models.DateTimeField(auto_now_add=True)
+    sizes=models.CharField(max_length=100,blank=True)
+    colors=models.CharField(max_length=100,blank=True)
+    specifications=models.TextField(blank=True)
+    rating=models.FloatField(default=0.0)
+    
+
 
     def __str__(self):
         return self.name
@@ -53,3 +59,24 @@ class OrderItem(models.Model):
     product_name = models.CharField(max_length=100)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     quantity = models.PositiveIntegerField(default=1) 
+
+class Review(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE,related_name='reviews')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    rating = models.PositiveIntegerField(choices=[(i,i) for i in range(1,6)])
+    comment=models.TextField()
+    created_at=models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Review by{self.user.username}'s Review on {self.product.name}"
+    
+class ProductQuestion(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='questions')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    question_text = models.TextField()
+    answer=models.TextField(blank=True,null=True)
+    asked_at=models.DateTimeField(auto_now_add=True)
+    answered_at=models.DateTimeField(blank=True,null=True)
+
+    def __str__(self):
+        return f"Q by {self.user.username} on {self.product.name}"

@@ -17,6 +17,9 @@ from django.urls import reverse_lazy
 from django.contrib.auth.views import PasswordResetView
 from django.contrib.auth import update_session_auth_hash
 from .models import Order,OrderItem
+from .models import Review,ProductQuestion
+from .forms import ReviewForm,QuestionForm
+
 def home(request):
     # No redirect — just check if logged in, and optionally show email warning
     email_warning = None
@@ -367,3 +370,43 @@ def view_orders(request):
 def total_price(self):
     return sum(item.quantity * item.price for item in self.items.all())
 
+def product_detail(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    related_products = Product.objects.filter(category=product.category).exclude(id=product.id)[:4]
+    sizes = [s.strip() for s in product.sizes.split(",")] if product.sizes else []
+    colors = [c.strip() for c in product.colors.split(",")] if product.colors else []
+    reviews = Review.objects.filter(product=product).order_by('-created_at')
+    questions = ProductQuestion.objects.filter(product=product).order_by('-asked_at')
+
+    review_form = ReviewForm()
+    question_form = QuestionForm()
+
+    if request.method == 'POST' and request.user.is_authenticated:
+        if 'submit_review' in request.POST:
+            review_form = ReviewForm(request.POST)
+            if review_form.is_valid():
+                review = review_form.save(commit=False)
+                review.product = product
+                review.user = request.user
+                review.save()
+                return redirect('product_detail', product_id=product.id)
+
+        elif 'submit_question' in request.POST:
+            question_form = QuestionForm(request.POST)
+            if question_form.is_valid():
+                question = question_form.save(commit=False)
+                question.product = product
+                question.user = request.user
+                question.save()
+                return redirect('product_detail', product_id=product.id)
+
+    return render(request, 'Amazonclone/product_detail.html', {
+        'product': product,
+        'sizes': sizes,
+        'colors': colors,
+        'related_products': related_products,
+        'reviews': reviews,
+        'questions': questions,
+        'review_form': review_form,
+        'question_form': question_form
+    })

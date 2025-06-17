@@ -16,13 +16,13 @@ from django.contrib.auth.views import (
 )
 urlpatterns = [
     path('', home, name='home'),
-    path('product/', product_detail, name='product_detail'),
+    path('product/<int:product_id>/', product_detail, name='product_detail'),
     path('cart/', cart_view, name='cart_view'),
     path('cart/add/<int:product_id>/', add_to_cart, name='add_to_cart'),
     path('cart/remove/<int:product_id>/', remove_from_cart, name='remove_from_cart'),
     path('cart/update/<int:product_id>/', update_cart, name='update_cart'),
 
-   path('password-reset/', CustomPasswordResetView.as_view(), name='password_reset'),
+    path('password-reset/', CustomPasswordResetView.as_view(), name='password_reset'),
     path('password-reset/done/', PasswordResetDoneView.as_view(
         template_name='Amazonclone/password_reset_done.html'
     ), name='password_reset_done'),
