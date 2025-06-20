@@ -129,3 +129,12 @@ nav.navbar {
 .footer{
     background-color: #222;
 }
+.dropdown-menu {
+  z-index: 1050;
+  display: block !important;
+  visibility: visible !important;
+}
+
+.dropdown-menu:not(.show) {
+  display: none !important;
+}

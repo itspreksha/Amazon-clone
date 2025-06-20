@@ -5,219 +5,203 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-  <script src="https://kit.fontawesome.com/6ec9c7cfba.js" crossorigin="anonymous"></script>
+<!-- Safe Bootstrap 5.3 via CDN (without integrity check) -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+ <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="icon" href="{% static 'favicon.ico' %}">
+  <!-- Static Files -->
+  <link rel="stylesheet" href="{% static 'static/styles.css' %}">
 
-  <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
-  <link rel="stylesheet" href="{% static 'styles.css' %}">
   <title>Online Shopping Site</title>
 </head>
 <body class="bg-light">
 
-<!-- Top Navbar -->
+<!-- Navbar -->
 <nav class="navbar navbar-dark bg-dark px-2 py-2">
   <div class="container-fluid flex-wrap d-flex justify-content-between align-items-center">
 
     <!-- Logo -->
     <a class="navbar-brand text-warning fw-bold fs-4" href="{% url 'home' %}">Amazon.in</a>
 
-    <!-- Location -->
-    <div class="d-none d-md-block text-white me-3">
-      <small>Deliver to</small><br>
-      <div class="dropdown">
-        <a class="dropdown-toggle text-white text-decoration-none" href="#" id="locationDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-          <i class="bi bi-geo-alt-fill me-1"></i> Ahmedabad 380059
-        </a>
-        <ul class="dropdown-menu">
-          <li><a class="dropdown-item" href="#">Delhi 110001</a></li>
-          <li><a class="dropdown-item" href="#">Mumbai 400001</a></li>
-          <li><a class="dropdown-item" href="#">Bangalore 560001</a></li>
-        </ul>
-      </div>
-    </div>
+   <!-- Location -->
+<div class="dropdown">
+  <a class="dropdown-toggle text-white text-decoration-none" 
+     href="#" 
+     id="locationDropdown" 
+     role="button" 
+     data-bs-toggle="dropdown" 
+     aria-expanded="false">
+    <i class="bi bi-geo-alt-fill me-1"></i> 
+    {{ selected_address.city|default:"Ahmedabad" }} {{ selected_address.pincode|default:"380059" }}
+  </a>
+
+  <ul class="dropdown-menu" aria-labelledby="locationDropdown">
+  {% for address in addresses %}
+    <li>
+     <a class="dropdown-item location-item" href="#" data-href="{% url 'set_default_address' address.id %}">
+  {{ address.city }} {{ address.pincode }}
+</a>
+
+    </li>
+  {% endfor %}
+  <li><hr class="dropdown-divider"></li>
+  <li>
+    <a class="dropdown-item text-primary" href="{% url 'manage_addresses' %}">
+      Manage Addresses
+    </a>
+  </li>
+</ul>
+
+</div>
 
     <!-- Search + Sort Form -->
     <form method="get" action="{% url 'home' %}" class="d-flex flex-grow-1 mx-3" style="max-width: 900px;">
       <div class="input-group w-100">
-
-        <!-- Category Dropdown -->
         <select name="category" class="form-select w-auto" style="max-width: 120px;">
           <option value="">All</option>
           {% for cat in categories %}
-            <option value="{{ cat.name }}" {% if request.GET.category == cat.name %}selected{% endif %}>
-              {{ cat.name }}
-            </option>
+            <option value="{{ cat.name }}" {% if request.GET.category == cat.name %}selected{% endif %}>{{ cat.name }}</option>
           {% endfor %}
         </select>
-
-        <!-- Search Field -->
         <input type="text" class="form-control" name="search" placeholder="Search for products, brands and more..." value="{{ request.GET.search|default:'' }}" />
-
-        <!-- Sort Dropdown -->
         <select name="sort" class="form-select w-auto" style="max-width: 100px;">
           <option value="">Sort by</option>
           <option value="price_asc" {% if request.GET.sort == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
           <option value="price_desc" {% if request.GET.sort == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
         </select>
-
-        <!-- Submit Button -->
         <button class="btn btn-warning" type="submit"><i class="bi bi-search"></i></button>
       </div>
     </form>
 
-    <!-- Account, Orders, Cart -->
-    <div class="d-flex align-items-center gap-4 text-white">
-      <div class="text-end">
-        <div class="small">Hello, sign in</div>
-        <a href="#" class="text-white text-decoration-none"><strong>Account & Lists</strong></a>
-      </div>
-      <div class="text-end">
-        <div class="small">Returns</div>
-        <a href="#" class="text-white text-decoration-none"><strong>& Orders</strong></a>
-      </div>
-      <div class="text-end d-flex align-items-center">
-        <a href="#" class="text-white text-decoration-none">
-          <i class="bi bi-cart fs-4 me-1"></i><strong>Cart</strong>
-        </a>
-      </div>
-    </div>
+    <!-- Account Info -->
+<div class="d-flex align-items-center gap-4 text-white">
+  <div class="text-end">
+    {% if user.is_authenticated %}
+      Hello, {{ user.username }} <br>
+      <a href="/logout/" class="text-white text-decoration-none">Logout</a>
+    {% else %}
+      Hello, <a href="/login/" class="text-white text-decoration-none">Sign in</a><br>
+      <a href="/login/" class="text-white text-decoration-none">Account & Lists</a>
+    {% endif %}
+    
+  <div class="text-end align-item-right--1">
+    <a href="{% url 'order_history' %}" class="btn btn-outline-secondary me-2">View Orders</a>
+  </div>
+
+  </div>
+
+  <div class="text-end d-flex align-items-center">
+    <a href="/cart/" class="text-white text-decoration-none">
+      <i class="bi bi-cart fs-4 me-1"></i><strong>Cart</strong>
+    </a>
+     <a href="{% url 'view_profile' %}" class="nav-link d-flex align-items-center ms-3">
+        <i class="fas fa-user me-1"></i> Profile
+    </a>
+  </div>
+</div>
 
     <!-- Language -->
     <div class="dropdown d-flex align-items-center ms-3">
       <button class="btn btn-light dropdown-toggle d-flex align-items-center p-1" type="button" id="languageDropdown" data-bs-toggle="dropdown">
-        <img src="https://flagcdn.com/in.svg" width="20" class="me-1"> <span>EN</span>
+        <img src="https://flagcdn.com/in.svg" width="20" class="me-1"> <span id="selected-lang">EN</span>
       </button>
       <ul class="dropdown-menu">
-        <li><a class="dropdown-item" href="#"><img src="https://flagcdn.com/fr.svg" width="20" class="me-2"> FR</a></li>
-        <li><a class="dropdown-item" href="#"><img src="https://flagcdn.com/de.svg" width="20" class="me-2"> DE</a></li>
-        <li><a class="dropdown-item" href="#"><img src="https://flagcdn.com/jp.svg" width="20" class="me-2"> JP</a></li>
+        <li><a class="dropdown-item language-option" href="#" data-lang="FR" data-flag="https://flagcdn.com/fr.svg"><img src="https://flagcdn.com/fr.svg" width="20" class="me-2"> FR</a></li>
+        <li><a class="dropdown-item language-option" href="#" data-lang="DE" data-flag="https://flagcdn.com/de.svg"><img src="https://flagcdn.com/de.svg" width="20" class="me-2"> DE</a></li>
+        <li><a class="dropdown-item language-option" href="#" data-lang="JP" data-flag="https://flagcdn.com/jp.svg"><img src="https://flagcdn.com/jp.svg" width="20" class="me-2"> JP</a></li>
       </ul>
     </div>
   </div>
 
-
-<!-- CATEGORY TILES SECTION -->
-<div class="container mt-0">
-  <div class="row">
-    {% for category in categories %}
-      <div class="col-6 col-md-2 text-center my-2">
-        <span class="category-icon">{{ category.icon }}</span><br>
-        <a class="categoryname text-decoration-none" href="{% url 'home' %}?category={{ category.name|urlencode }}">
-          <h6>{{ category.name }}</h6>
-        </a>
-      </div>
-    {% endfor %}
+  <!-- Category Tiles -->
+  <div class="container mt-0">
+    <div class="row">
+      {% for category in categories %}
+        <div class="col-6 col-md-2 text-center my-2">
+          <span class="category-icon">{{ category.icon }}</span><br>
+          <a class="categoryname text-decoration-none " style="color:white;" href="{% url 'home' %}?category={{ category.name|urlencode }}">
+            <h6>{{ category.name }}</h6>
+          </a>
+        </div>
+      {% endfor %}
+    </div>
   </div>
-</div>
-
 </nav>
 
-<div class="container mt-0 " style="width:500%;">
-    <div id="promoCarousel" class="carousel slide" data-bs-ride="carousel">
-        <div class="carousel-inner">
-            {% for deal in deals %}
-            <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                <img src="{% static deal.banner_img %}" class="d-block w-100" alt="Banner">
-            </div>
-            {% endfor %}
+<!-- Carousel -->
+<div class="container-fluid mt-0 px-0">
+  <div id="promoCarousel" class="carousel slide" data-bs-ride="carousel">
+    <div class="carousel-inner">
+      {% for deal in deals %}
+        <div class="carousel-item {% if forloop.first %}active{% endif %}">
+          <img src="{% static deal.banner_img %}" class="d-block w-100" alt="Banner">
         </div>
-        <button class="carousel-control-prev" type="button" data-bs-target="#promoCarousel" data-bs-slide="prev">
-            <span class="carousel-control-prev-icon"></span>
-        </button>
-        <button class="carousel-control-next" type="button" data-bs-target="#promoCarousel" data-bs-slide="next">
-            <span class="carousel-control-next-icon"></span>
-        </button>
+      {% endfor %}
     </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#promoCarousel" data-bs-slide="prev">
+      <span class="carousel-control-prev-icon"></span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#promoCarousel" data-bs-slide="next">
+      <span class="carousel-control-next-icon"></span>
+    </button>
+  </div>
 </div>
 
 <!-- Deals of the Day -->
 <div class="container mt-5">
-    <h3 class="mb-4">🔥 Deals of the Day</h3>
+  <h3 class="mb-4">🔥 Deals of the Day</h3>
+  <div class="row">
+    {% for product in deals_of_day %}
+      <div class="col-6 col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+          <img src="{% static product.img %}" class="card-img-top p-3" alt="{{ product.name }}">
+          <div class="card-body">
+            <h6 class="card-title">{{ product.name }}</h6>
+            <p class="card-text text-success fw-bold">{{ product.price }}</p>
+            <span class="badge bg-danger">{{ product.discount }}</span>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Featured, Best Sellers, Trending -->
+{% for section in product_sections %}
+  <div class="container mt-4">
+    <h3>{{ section.0 }}</h3>
     <div class="row">
-        {% for product in deals_of_day %}
-        <div class="col-6 col-md-4 mb-4">
-            <div class="card h-100 shadow-sm">
-                <img src="{% static  product.img %}" class="card-img-top p-3" alt="{{ product.name }}">
-                <div class="card-body">
-                    <h6 class="card-title">{{ product.name }}</h6>
-                    <p class="card-text text-success fw-bold">{{ product.price }}</p>
-                    <span class="badge bg-danger">{{ product.discount }}</span>
-                </div>
+      {% for product in section.1 %}
+        <div class="col-6 col-md-3 my-2">
+          <div class="card product-card">
+            <img src="{% static product.img %}" class="card-img-top" alt="{{ product.name }}">
+            <div class="card-body">
+              <h6 class="card-title">{{ product.name }}</h6>
+              <p class="card-text text-danger">{{ product.price }}</p>
             </div>
+          </div>
         </div>
-        {% endfor %}
+      {% endfor %}
     </div>
-</div>
-
-
-
-
-<!-- FEATURED PRODUCTS -->
-<div class="container mt-4">
-  <h3>Featured Products</h3>
-  <div class="row">
-    {% for product in featured_products %}
-      <div class="col-6 col-md-3 my-2">
-        <div class="card product-card">
-          <img src="{% static product.img %}" class="card-img-top" alt="{{ product.name }}">
-          <div class="card-body">
-            <h6 class="card-title">{{ product.name }}</h6>
-            <p class="card-text text-danger">{{ product.price }}</p>
-          </div>
-        </div>
-      </div>
-    {% endfor %}
   </div>
-</div>
+{% endfor %}
 
-<!-- BEST SELLERS -->
-<div class="container mt-4">
-  <h3>Best Sellers</h3>
-  <div class="row">
-    {% for product in best_sellers %}
-      <div class="col-6 col-md-3 my-2">
-        <div class="card product-card">
-          <img src="{% static product.img %}" class="card-img-top" alt="{{ product.name }}">
-          <div class="card-body">
-            <h6 class="card-title">{{ product.name }}</h6>
-            <p class="card-text text-danger">{{ product.price }}</p>
-          </div>
-        </div>
-      </div>
-    {% endfor %}
-  </div>
-</div>
-
-<!-- TRENDING ITEMS -->
-<div class="container mt-4">
-  <h3>Trending Items</h3>
-  <div class="row">
-    {% for product in trending_items %}
-      <div class="col-6 col-md-3 my-2">
-        <div class="card product-card">
-          <img src="{% static product.img %}" class="card-img-top" alt="{{ product.name }}">
-          <div class="card-body">
-            <h6 class="card-title">{{ product.name }}</h6>
-            <p class="card-text text-danger">{{ product.price }}</p>
-          </div>
-        </div>
-      </div>
-    {% endfor %}
-  </div>
-</div>
-
+<!-- Products Grid -->
 <div class="container mt-5">
   <h2 class="mb-4">Products</h2>
   <div class="row">
     {% for product in products %}
       <div class="col-sm-6 col-md-4 col-lg-3 mb-4">
         <div class="card h-100 shadow-sm border-0">
-          <img src="{% static product.image.url %}" class="card-img-top img-fluid" alt="{{ product.name }}" style="height: 250px; object-fit: cover;">
+          {% if product.image %}
+            <img src="{% static product.image.url %}" class="card-img-top img-fluid" alt="{{ product.name }}" style="height: 250px; object-fit: cover;">
+          {% else %}
+            <img src="{% static 'default-product.jpg' %}" class="card-img-top img-fluid" alt="No image" style="height: 250px; object-fit: cover;">
+          {% endif %}
           <div class="card-body d-flex flex-column justify-content-between">
             <h5 class="card-title">{{ product.name }}</h5>
             <p class="card-text text-success fw-bold">₹{{ product.price }}</p>
-            <a href="{% url 'product_detail' %}?id={{ product.id }}" class="btn btn-primary mt-auto">View</a>
+            <a href="{% url 'product_detail' product.id %}" class="btn btn-primary mt-auto">View</a>
           </div>
         </div>
       </div>
@@ -225,34 +209,72 @@
   </div>
 </div>
 
+<!-- Pagination -->
 <nav>
   <ul class="pagination">
     {% if products.has_previous %}
-    <li class="page-item"><a class="page-link" href="?page=={{products.previous_page_number}}">Previous</a></li>
+      <li class="page-item"><a class="page-link" href="?page={{products.previous_page_number}}">Previous</a></li>
     {% endif %}
-    <li class="page-item active"><span class="page-link">{{products.number}}</span></li>
+    <li class="page-item active"><span class="page-link">{{ products.number }}</span></li>
     {% if products.has_next %}
-    <li class="page-item"><a class="page-link" href="?page={{products.next_page_number}}">Next</a></li>
+      <li class="page-item"><a class="page-link" href="?page={{products.next_page_number}}">Next</a></li>
     {% endif %}
   </ul>
 </nav>
-<footer class="footer text-center mt-5 py-4 bg-light text-muted back" Styles="background-color:grey;">
+
+<!-- Footer -->
+<footer class="footer text-center mt-5 py-4 bg-dark text-white">
   © 2025 Amazon.in Clone. All Rights Reserved.
 </footer>
+
+<!-- Language Selector Script -->
 <script>
-  document.querySelectorAll('.language-option').forEach(item = {
-    item.addEventListener('click', function (e) {
-      e.preventDefault();
+  document.addEventListener("DOMContentLoaded", function () {
+    // Auto-close language dropdown (already done)
+    document.querySelectorAll('.language-option').forEach(item => {
+      item.addEventListener('click', function (e) {
+        e.preventDefault();
+        const selectedLang = this.getAttribute('data-lang');
+        const selectedFlag = this.getAttribute('data-flag');
 
-      const selectedLang = this.getAttribute('data-lang');
-      const selectedFlag = this.getAttribute('data-flag');
+        document.getElementById('selected-lang').textContent = selectedLang;
+        document.querySelector('#languageDropdown img').src = selectedFlag;
 
-      document.getElementById('selected-lang').textContent = selectedLang;
-      document.getElementById('selected-flag').src = selectedFlag;
+        const dropdown = bootstrap.Dropdown.getOrCreateInstance(document.getElementById('languageDropdown'));
+        dropdown.hide();
+      });
+    });
+
+    // Auto-close ANY dropdown when a dropdown-item is clicked
+    document.querySelectorAll('.dropdown-menu .dropdown-item').forEach(item => {
+      item.addEventListener('click', function () {
+        const dropdownToggle = this.closest('.dropdown').querySelector('[data-bs-toggle="dropdown"]');
+        if (dropdownToggle) {
+          const dropdownInstance = bootstrap.Dropdown.getOrCreateInstance(dropdownToggle);
+          dropdownInstance.hide();
+        }
+      });
+    });
+
+    // Optional: Close dropdown when clicking outside
+    document.addEventListener('click', function (e) {
+      document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+        if (!menu.contains(e.target) && !menu.previousElementSibling.contains(e.target)) {
+          const toggle = menu.previousElementSibling;
+          if (toggle && toggle.classList.contains('dropdown-toggle')) {
+            bootstrap.Dropdown.getOrCreateInstance(toggle).hide();
+          }
+        }
+      });
     });
   });
+
 </script>
-<!-- Scripts -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+
 </body>
 </html>
+
+
+
