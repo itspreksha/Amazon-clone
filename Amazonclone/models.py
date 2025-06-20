@@ -20,8 +20,6 @@ class Product(models.Model):
     specifications=models.TextField(blank=True)
     rating=models.FloatField(default=0.0)
     
-
-
     def __str__(self):
         return self.name
     
@@ -29,10 +27,17 @@ class Product(models.Model):
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     phone = models.CharField(max_length=15, blank=True)
-    address = models.TextField(blank=True)
     city = models.CharField(max_length=100, blank=True)
     otp = models.CharField(max_length=6, blank=True, null=True)
     email_verified = models.BooleanField(default=False)
+    address=models.TextField(blank=True)
+    default_address=models.ForeignKey(
+        'Address',
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name='profiles_with_default'
+    )
 
     def __str__(self):
         return f"{self.user.username}'s Profile"
@@ -47,13 +52,24 @@ class OTPVerification(models.Model):
         return f"{self.user.username} - OTP"
 
 class Order(models.Model):
-    user=models.ForeignKey(User,on_delete=models.CASCADE)
-    order_date=models.DateTimeField(auto_now_add=True)
-    status=models.CharField(max_length=20,choices=[("Pending","Pending"),("Shipped","Shipped"),("Delivered","Delivered")])
-    total_price=models.DecimalField(max_digits=10,decimal_places=2,default=0.00)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    order_date = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(
+        max_length=20,
+        choices=[("Pending", "Pending"), ("Shipped", "Shipped"), ("Delivered", "Delivered")],
+        default="Pending"
+    )
+    total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+
+    # Payment-related fields (only define ONCE!)
+    razorpay_order_id = models.CharField(max_length=100, null=True, blank=True)
+    payment_id = models.CharField(max_length=100, unique=True, blank=True, null=True)  # for 'pay_xxx'
+    payment_method = models.CharField(max_length=20, default='Online')  # 'Online' or 'COD'
+    payment_status = models.CharField(max_length=20, default='Pending')  # 'Pending', 'Success', etc.
 
     def __str__(self):
         return f"Order #{self.id} by {self.user.username}"
+
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
     product_name = models.CharField(max_length=100)
@@ -80,3 +96,26 @@ class ProductQuestion(models.Model):
 
     def __str__(self):
         return f"Q by {self.user.username} on {self.product.name}"
+
+class Address(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    name=models.CharField(max_length=100)
+    phone=models.CharField(max_length=10)
+    pincode=models.CharField(max_length=10)
+    address_line=models.TextField()
+    city=models.CharField(max_length=100)
+    state=models.CharField(max_length=100)
+    address_type=models.CharField(max_length=10,choices=[('Home','Home'),('Office','Office')])
+    is_default=models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.name}-{self.city}"
+    
+class Cart(models.Model):
+    user=models.ForeignKey(User,on_delete=models.CASCADE)
+    product=models.ForeignKey(Product,on_delete=models.CASCADE)
+    quantity=models.PositiveIntegerField(default=1)
+
+    def __str__(self):
+        return f"{self.user.username}-{self.product.name}"
+    

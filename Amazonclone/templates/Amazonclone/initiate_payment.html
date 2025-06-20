@@ -1,0 +1,26 @@
+{% extends 'Amazonclone/base.html' %}
+{% block content %}
+<div class="container mt-5">
+  <h2>Choose Payment Method</h2>
+
+  <form method="POST" action="{% url 'initiate_payment' %}">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label>Enter Amount</label>
+      <input type="number" name="amount" required min="1" step="0.01" class="form-control">
+    </div>
+    <button type="submit" class="btn btn-success">Pay Online</button>
+  </form>
+
+  <hr class="my-4">
+
+  <form method="POST" action="{% url 'cod_order' %}">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label for="pincode">Enter Pincode:</label>
+      <input type="text" name="pincode" required class="form-control">
+    </div>
+    <button type="submit" class="btn btn-warning mt-2">Order with COD</button>
+  </form>
+</div>
+{% endblock %}

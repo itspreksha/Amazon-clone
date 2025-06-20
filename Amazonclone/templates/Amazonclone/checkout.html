@@ -1,0 +1,21 @@
+{% extends "Amazonclone/base.html" %}
+
+{% block content %}
+<div class="container mt-5 text-center">
+  <h2>Choose Payment Method</h2>
+  <h4 class="mt-3">Total Amount: ₹{{ amount }}</h4>
+
+  <!-- Pay Online Form -->
+  <form method="POST" action="{% url 'initiate_payment' %}">
+    {% csrf_token %}
+    <input type="hidden" name="amount" value="{{ amount }}">
+    <button type="submit" class="btn btn-success btn-lg mt-3 w-50">Pay Online</button>
+  </form>
+
+  <!-- COD Form -->
+  <form method="POST" action="{% url 'cod_order' %}" class="mt-3">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-warning btn-lg w-50">Cash on Delivery</button>
+  </form>
+</div>
+{% endblock %}

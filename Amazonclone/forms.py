@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 from .models import Profile  
 from .models import Review,ProductQuestion
-
+from .models import Address
 class RegisterForm(UserCreationForm):
     email = forms.EmailField(required=True)
 
@@ -51,4 +51,13 @@ class QuestionForm(forms.ModelForm):
         fields = ['question_text']
         widgets={
             'question_text':forms.Textarea(attrs={'rows':3,'placeholder':'Ask a question..'}),
+        }
+
+class AddressForm(forms.ModelForm):
+    class Meta:
+        model = Address
+        fields = ['name','phone','pincode','address_line','city','state','address_type','is_default']
+        widgets={
+            'is_default':forms.CheckboxInput(attrs={'class':'form-check-input'})
+            
         }
