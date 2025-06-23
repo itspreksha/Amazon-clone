@@ -51,8 +51,11 @@ urlpatterns = [
     path('initiate-payment/', views.initiate_payment, name='initiate_payment'),
     path('payment/success/',views.payment_success,name='payment_success'),
     path('payment/success/', views.payment_success, name='order_success'),
+    path('payment/success/',views.cod_success_view,name='cod_success'),
     path('cod-order/',views.cod_order,name='cod_order'),
     path('thankyou/', views.thankyou, name='thankyou'),
     path('checkout/', views.checkout, name='checkout'),
+    path('check-cod/',views.check_cod_availability,name='check_cod_availability'),
+    path('cod/success/', views.cod_success_view, name='cod_success'),
 
-]
+]   

@@ -509,11 +509,12 @@ def initiate_payment(request):
         })
 
     return HttpResponseBadRequest("Invalid request method")
+
 @csrf_exempt
 def payment_success(request):
     if request.method == 'POST':
         payment_id = request.POST.get('payment_id')
-        order_id = request.POST.get('order_id')
+        order_id = request.POST.get('order_id')  # Razorpay Order ID
         signature = request.POST.get('signature')
 
         if not all([payment_id, order_id, signature]):
@@ -530,7 +531,9 @@ def payment_success(request):
         except razorpay.errors.SignatureVerificationError:
             return JsonResponse({'error': 'Signature verification failed'}, status=400)
 
+        # Fetch the correct order
         order = Order.objects.filter(razorpay_order_id=order_id).order_by('-order_date').first()
+
         if not order:
             return JsonResponse({'error': 'Order not found'}, status=400)
 
@@ -538,7 +541,14 @@ def payment_success(request):
         order.payment_status = 'Paid'
         order.save()
 
-        # Optionally send confirmation mail here
+        # ✅ Send email confirmation
+        send_mail(
+            subject='Order Confirmation - Payment Successful',
+            message=f'Your order #{order.id} has been successfully placed and paid online.',
+            from_email='no-reply@amazonclone.com',
+            recipient_list=[order.user.email],
+            fail_silently=False
+        )
 
         return JsonResponse({'order_id': order.id})
 
@@ -546,33 +556,43 @@ def payment_success(request):
 
 
 @login_required
+@csrf_exempt
 def cod_order(request):
     if request.method == 'POST':
-        pincode = request.POST.get('pincode')
+        pincode = request.POST.get('pincode', '').strip()
+        print("COD Order Received - Pincode:", repr(pincode))
 
-        if pincode not in COD_ALLOWED_PINCODES:
-            return JsonResponse({'error': 'COD not available in your area.'}, status=400)
+        if pincode in COD_ALLOWED_PINCODES:
+            if not request.user.is_authenticated:
+                return JsonResponse({'error': 'Please log in to place an order.'})
 
-        cart_items = Cart.objects.filter(user=request.user)
-        total_price = sum(item.product.price * item.quantity for item in cart_items)
+            cart_items = Cart.objects.filter(user=request.user)
+            if not cart_items:
+                return JsonResponse({'error': 'Your cart is empty.'})
 
-        order = Order.objects.create(
-            user=request.user,
-            total_price=total_price,
-            payment_status='Pending',
-            payment_method='COD'
-        )
+            total_price = sum(item.product.price * item.quantity for item in cart_items)
 
-        # ✅ Send confirmation email
-        send_mail(
-            subject='COD Order Confirmation',
-            message=f'Thank you for your order #{order.id} placed with Cash on Delivery.',
-            from_email='no-reply@amazonclone.com',
-            recipient_list=[request.user.email],
-            fail_silently=False,
-        )
+            order = Order.objects.create(
+                user=request.user,
+                total_price=total_price,
+                payment_status='Pending',
+                payment_method='COD'
+            )
 
-        return render(request, 'Amazonclone/order_success.html', {'order': order})
+            send_mail(
+                subject='COD Order Confirmation',
+                message=f'Thank you for your order #{order.id}. We’ll deliver it soon!',
+                from_email='no-reply@amazonclone.com',
+                recipient_list=[request.user.email],
+                fail_silently=False,
+            )
+
+            return JsonResponse({'redirect_url': '/cod/success/'})
+
+        else:
+            return JsonResponse({'error': 'COD not available in your area.'})
+    
+    return JsonResponse({'error': 'Invalid request method.'}, status=405)
 
 @login_required
 def checkout(request):
@@ -593,8 +613,6 @@ def checkout(request):
         })
 
     return redirect('cart_view')
-
-
  
 @login_required
 def order_success(request):
@@ -604,3 +622,19 @@ def thankyou(request):
     order_id = request.GET.get('order_id')
     order = Order.objects.filter(id=order_id).first()
     return render(request, 'Amazonclone/thankyou.html', {'order': order})
+
+@csrf_exempt
+def check_cod_availability(request):
+    if request.method == "POST":
+        pincode = request.POST.get('pincode', '').strip()
+        print("Checking COD for:", repr(pincode))  # Debugging
+
+        if pincode in COD_ALLOWED_PINCODES:
+            return JsonResponse({'cod_available': True, 'message': 'COD is available in your area.'})
+        else:
+            return JsonResponse({'cod_available': False, 'message': 'COD is not available in your area.'})
+    else:
+        return JsonResponse({'error': 'Invalid request method.'}, status=405)
+
+def cod_success_view(request):
+    return render(request,'Amazonclone/order_success.html')
