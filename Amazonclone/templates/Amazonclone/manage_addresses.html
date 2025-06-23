@@ -1,0 +1,20 @@
+{% extends "Amazonclone/base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h3>Your Addresses</h3>
+    <a href="{% url 'add_address' %}" class="btn btn-success mb-3">Add New Address</a>
+    <div class="row">
+        {% for address in addresses %}
+        <div class="col-md-6">
+            <h5>{{address.name}}</h5>
+            <p>{{address.phone}}<br>
+            {{address.address_line}}<br>
+            {{address.city}},{{address.state}}-{{address.pincode}}<br>
+        Type:{{address.address_type}}{%if address.is_default%}(Default){% endif %}</p>
+        <a href="{% url 'edit_address' address.id%}" class="btn btn-primary btn-sm">Edit</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock  %}

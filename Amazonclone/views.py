@@ -17,6 +17,20 @@ from django.urls import reverse_lazy
 from django.contrib.auth.views import PasswordResetView
 from django.contrib.auth import update_session_auth_hash
 from .models import Order,OrderItem
+from .models import Review,ProductQuestion
+from .forms import ReviewForm,QuestionForm
+from .models import Address
+from .forms  import AddressForm
+import razorpay
+from django.http import HttpResponse
+from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
+from django.core.mail import send_mail
+from django.http import HttpResponseBadRequest,JsonResponse
+from .models import Cart
+
+COD_ALLOWED_PINCODES = ['380001', '110001', '560001','380013']
+
 def home(request):
     # No redirect — just check if logged in, and optionally show email warning
     email_warning = None
@@ -31,6 +45,14 @@ def home(request):
     search = request.GET.get('search')
     sort = request.GET.get('sort')
     page = request.GET.get('page', 1)
+    
+
+    addresses = []
+    selected_address = None
+    if request.user.is_authenticated:
+     addresses = Address.objects.filter(user=request.user)
+     selected_address = addresses.filter(is_default=True).first()
+
 
     if category:
         products = products.filter(category=category)
@@ -81,6 +103,8 @@ def home(request):
         'products': products_page,
         'paginator': paginator,
         'email_warning': email_warning,
+        'addresses':addresses,
+        'selected_address':selected_address
     }
     return render(request, 'Amazonclone/home.html', context)
 
@@ -119,29 +143,26 @@ def update_cart(request, product_id):
         request.session['cart'] = cart
     return redirect('cart_view')
 
+@login_required
 def cart_view(request):
-    cart = request.session.get('cart', {})
-    product_ids = cart.keys()
-    products = Product.objects.filter(id__in=product_ids)
-    cart_items = []
+    cart_items = Cart.objects.filter(user=request.user)
     subtotal = 0
-    for product in products:
-        quantity = cart.get(str(product.id), 1)
-        total_price = product.price * quantity
-        subtotal += total_price
-        cart_items.append({
-            'product': product,
-            'quantity': quantity,
-            'total_price': total_price
-        })
-    estimated_shipping = 50 if subtotal else 0
+
+    for item in cart_items:
+        item.total_price = item.product.price * item.quantity
+        subtotal += item.total_price
+
+    estimated_shipping = 49  # example fixed shipping
     total = subtotal + estimated_shipping
+
     return render(request, 'Amazonclone/cart.html', {
         'cart_items': cart_items,
         'subtotal': subtotal,
         'estimated_shipping': estimated_shipping,
-        'total': total,
+        'total': total
     })
+
+   
 
 def get_cart_item_count(request):
     return sum(request.session.get('cart', {}).values())
@@ -363,7 +384,257 @@ def view_orders(request):
     orders = Order.objects.filter(user=request.user, is_ordered=True)
     return render(request, 'Amazonclone/orders.html',{'orders':orders})
 
+@login_required
+def order_success(request):
+    order_id = request.GET.get('order_id')
+    return render(request,"Amazonclone/order_success.html",{"order_id":order_id})
+
 @property
 def total_price(self):
-    return sum(item.quantity * item.price for item in self.items.all())
+    return self.product.price * self.quantity
 
+def product_detail(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    related_products = Product.objects.filter(category=product.category).exclude(id=product.id)[:4]
+    sizes = [s.strip() for s in product.sizes.split(",")] if product.sizes else []
+    colors = [c.strip() for c in product.colors.split(",")] if product.colors else []
+    reviews = Review.objects.filter(product=product).order_by('-created_at')
+    questions = ProductQuestion.objects.filter(product=product).order_by('-asked_at')
+
+    review_form = ReviewForm()
+    question_form = QuestionForm()
+
+    if request.method == 'POST' and request.user.is_authenticated:
+        if 'submit_review' in request.POST:
+            review_form = ReviewForm(request.POST)
+            if review_form.is_valid():
+                review = review_form.save(commit=False)
+                review.product = product
+                review.user = request.user
+                review.save()
+                return redirect('product_detail', product_id=product.id)
+
+        elif 'submit_question' in request.POST:
+            question_form = QuestionForm(request.POST)
+            if question_form.is_valid():
+                question = question_form.save(commit=False)
+                question.product = product
+                question.user = request.user
+                question.save()
+                return redirect('product_detail', product_id=product.id)
+
+    return render(request, 'Amazonclone/product_detail.html', {
+        'product': product,
+        'sizes': sizes,
+        'colors': colors,
+        'related_products': related_products,
+        'reviews': reviews,
+        'questions': questions,
+        'review_form': review_form,
+        'question_form': question_form
+    })
+
+@login_required
+def manage_addresses(request):
+    addresses = Address.objects.filter(user=request.user)
+    return render(request,'Amazonclone/manage_addresses.html',{'addresses':addresses})
+
+@login_required
+def add_address(request):
+    if request.method == 'POST':
+        form = AddressForm(request.POST)
+        if form.is_valid():
+            address=form.save(commit=False)
+            address.user=request.user
+            if address.is_default:
+                Address.objects.filter(user=request.user,is_default=True).update(is_default=False)
+            address.save()
+
+            if address.is_default:
+                profile=Profile.objects.get(user=request.user)
+                profile.default_address=address
+                profile.save()
+            return redirect('manage_addresses')
+    else:
+        form = AddressForm()
+    return render(request,'Amazonclone/add_address.html',{'form':form})
+
+@login_required
+def edit_address(request, address_id):
+    address = Address.objects.get(id=address_id,user=request.user)
+    form=AddressForm(request.POST or None,instance=address)
+    if form.is_valid():
+        form.save()
+        return redirect('manage_addresses')
+    return render(request,'Amazonclone/edit_address.html',{'form':form})
+
+def set_default_address(request,address_id):
+    address=get_object_or_404(Address,id=address_id,user=request.user)
+    request.session['selected_address_id']=address.id 
+    return redirect('home')
+
+@login_required
+def initiate_payment(request):
+    if request.method == 'POST':
+        try:
+            amount = float(request.POST.get('amount'))
+        except (ValueError, TypeError):
+            return HttpResponseBadRequest("Invalid amount")
+
+        # Razorpay client setup
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+
+        # Create a Razorpay order
+        payment = client.order.create({
+            'amount': int(amount * 100),  # Convert to paisa
+            'currency': 'INR',
+            'payment_capture': '1'
+        })
+
+        # Create a local order and store the Razorpay order ID
+        order = Order.objects.create(
+            user=request.user,
+            total_price=amount,
+            payment_method='Online',
+            payment_status='Pending',
+            razorpay_order_id=payment['id']  # Save Razorpay order ID
+        )
+
+        return render(request,'Amazonclone/payment.html', {
+            'payment': payment,
+            'order': order,
+            'key_id': settings.RAZORPAY_KEY_ID,
+            'amount': int(amount * 100),  # Send paisa to JS
+            'user': request.user
+        })
+
+    return HttpResponseBadRequest("Invalid request method")
+
+@csrf_exempt
+def payment_success(request):
+    if request.method == 'POST':
+        payment_id = request.POST.get('payment_id')
+        order_id = request.POST.get('order_id')  # Razorpay Order ID
+        signature = request.POST.get('signature')
+
+        if not all([payment_id, order_id, signature]):
+            return JsonResponse({'error': 'Missing payment data'}, status=400)
+
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+
+        try:
+            client.utility.verify_payment_signature({
+                'razorpay_order_id': order_id,
+                'razorpay_payment_id': payment_id,
+                'razorpay_signature': signature
+            })
+        except razorpay.errors.SignatureVerificationError:
+            return JsonResponse({'error': 'Signature verification failed'}, status=400)
+
+        # Fetch the correct order
+        order = Order.objects.filter(razorpay_order_id=order_id).order_by('-order_date').first()
+
+        if not order:
+            return JsonResponse({'error': 'Order not found'}, status=400)
+
+        order.payment_id = payment_id
+        order.payment_status = 'Paid'
+        order.save()
+
+        # ✅ Send email confirmation
+        send_mail(
+            subject='Order Confirmation - Payment Successful',
+            message=f'Your order #{order.id} has been successfully placed and paid online.',
+            from_email='no-reply@amazonclone.com',
+            recipient_list=[order.user.email],
+            fail_silently=False
+        )
+
+        return JsonResponse({'order_id': order.id})
+
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+
+@login_required
+@csrf_exempt
+def cod_order(request):
+    if request.method == 'POST':
+        pincode = request.POST.get('pincode', '').strip()
+        print("COD Order Received - Pincode:", repr(pincode))
+
+        if pincode in COD_ALLOWED_PINCODES:
+            if not request.user.is_authenticated:
+                return JsonResponse({'error': 'Please log in to place an order.'})
+
+            cart_items = Cart.objects.filter(user=request.user)
+            if not cart_items:
+                return JsonResponse({'error': 'Your cart is empty.'})
+
+            total_price = sum(item.product.price * item.quantity for item in cart_items)
+
+            order = Order.objects.create(
+                user=request.user,
+                total_price=total_price,
+                payment_status='Pending',
+                payment_method='COD'
+            )
+
+            send_mail(
+                subject='COD Order Confirmation',
+                message=f'Thank you for your order #{order.id}. We’ll deliver it soon!',
+                from_email='no-reply@amazonclone.com',
+                recipient_list=[request.user.email],
+                fail_silently=False,
+            )
+
+            return JsonResponse({'redirect_url': '/cod/success/'})
+
+        else:
+            return JsonResponse({'error': 'COD not available in your area.'})
+    
+    return JsonResponse({'error': 'Invalid request method.'}, status=405)
+
+@login_required
+def checkout(request):
+    if request.method == 'POST':
+        cart_items = Cart.objects.filter(user=request.user)
+        if not cart_items:
+            return HttpResponse("Cart is empty", status=400)
+
+        subtotal = sum(item.product.price * item.quantity for item in cart_items)
+        estimated_shipping = 50
+        total_amount = subtotal + estimated_shipping
+
+        return render(request, 'Amazonclone/checkout.html', {
+            'cart_items': cart_items,
+            'subtotal': subtotal,
+            'estimated_shipping': estimated_shipping,
+            'amount': total_amount,
+        })
+
+    return redirect('cart_view')
+ 
+@login_required
+def order_success(request):
+    return render(request,'Amazonclone/order_success.html')
+
+def thankyou(request):
+    order_id = request.GET.get('order_id')
+    order = Order.objects.filter(id=order_id).first()
+    return render(request, 'Amazonclone/thankyou.html', {'order': order})
+
+@csrf_exempt
+def check_cod_availability(request):
+    if request.method == "POST":
+        pincode = request.POST.get('pincode', '').strip()
+        print("Checking COD for:", repr(pincode))  # Debugging
+
+        if pincode in COD_ALLOWED_PINCODES:
+            return JsonResponse({'cod_available': True, 'message': 'COD is available in your area.'})
+        else:
+            return JsonResponse({'cod_available': False, 'message': 'COD is not available in your area.'})
+    else:
+        return JsonResponse({'error': 'Invalid request method.'}, status=405)
+
+def cod_success_view(request):
+    return render(request,'Amazonclone/order_success.html')

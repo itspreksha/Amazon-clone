@@ -1,0 +1,106 @@
+{% extends "Amazonclone/base.html" %}
+{% block content %}
+<div class="container mt-5 text-center">
+  <h2>Choose Payment Method</h2>
+  <h4 class="mt-3">Total Amount: ₹{{ amount }}</h4>
+
+  <!-- Pay Online Form -->
+  <form method="POST" action="{% url 'initiate_payment' %}">
+    {% csrf_token %}
+    <input type="hidden" name="amount" value="{{ amount }}">
+    <button type="submit" class="btn btn-success btn-lg mt-3 w-50">Pay Online</button>
+  </form>
+  <hr class="my-4">
+
+  <!-- COD Section -->
+  <h4>Cash on Delivery</h4>
+  {% if user.is_authenticated and user.address_set.exists %}
+    {% with address=user.address_set.first %}
+      <div class="card p-3 mb-3">
+        <h5>Deliver To:</h5>
+        <p><strong>{{ address.name }}</strong></p>
+        <p>{{ address.phone }}</p>
+        <p>{{ address.address_line }}, {{ address.city }}, {{ address.state }} - {{ address.pincode }}</p>
+        <p><span class="badge bg-info">{{ address.address_type }}</span></p>
+        <button onclick="checkCOD('{{ address.pincode }}')" class="btn btn-primary">Check COD Availability</button>
+      </div>
+    {% endwith %}
+  {% else %}
+    <form id="cod-check-form" onsubmit="event.preventDefault(); checkCODFromInput();">
+      {% csrf_token %}
+      <label>Enter Full Address:</label>
+      <input type="text" id="name" placeholder="Name" class="form-control mb-2" required>
+      <input type="text" id="phone" placeholder="Phone" class="form-control mb-2" required>
+      <input type="text" id="address_line" placeholder="Address Line" class="form-control mb-2" required>
+      <input type="text" id="city" placeholder="City" class="form-control mb-2" required>
+      <input type="text" id="state" placeholder="State" class="form-control mb-2" required>
+      <input type="text" id="pincode-input" placeholder="Pincode" class="form-control mb-2" required>
+      <button type="submit" class="btn btn-primary">Check COD</button>
+    </form>
+  {% endif %}
+
+  <div id="cod-message" class="mt-3"></div>
+  <div id="place-order-container" class="mt-3" style="display:none">
+    <form id="place-cod-order-form" onsubmit="event.preventDefault(); placeCODOrder();">
+      <input type="hidden" name="pincode" id="confirmed-pincode">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-success">Place COD Order</button>
+    </form>
+  </div>
+</div>
+
+<script>
+function getCSRFToken() {
+  return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+
+function checkCOD(pincode) {
+  fetch('/check-cod/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'X-CSRFToken': getCSRFToken()
+    },
+    body: `pincode=${encodeURIComponent(pincode)}`
+  })
+  .then(response => response.json())
+  .then(data => {
+    const msgDiv = document.getElementById('cod-message');
+    const placeOrderDiv = document.getElementById('place-order-container');
+    if (data.cod_available) {
+      msgDiv.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+      document.getElementById('confirmed-pincode').value = pincode;
+      placeOrderDiv.style.display = 'block';
+    } else {
+      msgDiv.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
+      placeOrderDiv.style.display = 'none';
+    }
+  });
+}
+
+function checkCODFromInput() {
+  const pincode = document.getElementById('pincode-input').value;
+  checkCOD(pincode);
+}
+
+function placeCODOrder() {
+  const pincode = document.getElementById('confirmed-pincode').value;
+  fetch('/cod-order/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'X-CSRFToken': getCSRFToken()
+    },
+    body: `pincode=${encodeURIComponent(pincode)}`
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.redirect_url) {
+      window.location.href = data.redirect_url;
+    } else {
+      alert(data.error || 'Something went wrong');
+    }
+  });
+}
+</script>
+{% endblock %}

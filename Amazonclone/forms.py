@@ -2,8 +2,8 @@ from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 from .models import Profile  
-
-
+from .models import Review,ProductQuestion
+from .models import Address
 class RegisterForm(UserCreationForm):
     email = forms.EmailField(required=True)
 
@@ -36,3 +36,28 @@ class ProfileForm(forms.ModelForm):
             profile.save()
         return profile
 
+class ReviewForm(forms.ModelForm):
+    class Meta:
+        model = Review
+        fields = ['rating', 'comment']
+        widgets={
+            'rating':forms.NumberInput(attrs={'min':1,'max':5}),
+            'comment':forms.Textarea(attrs={'rows':3}),
+        }
+
+class QuestionForm(forms.ModelForm):
+    class Meta:
+        model = ProductQuestion
+        fields = ['question_text']
+        widgets={
+            'question_text':forms.Textarea(attrs={'rows':3,'placeholder':'Ask a question..'}),
+        }
+
+class AddressForm(forms.ModelForm):
+    class Meta:
+        model = Address
+        fields = ['name','phone','pincode','address_line','city','state','address_type','is_default']
+        widgets={
+            'is_default':forms.CheckboxInput(attrs={'class':'form-check-input'})
+            
+        }

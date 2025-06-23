@@ -1,0 +1,49 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block content %}
+<h1>📊 Admin Dashboard</h1>
+
+<ul>
+  <li><strong>Total Users:</strong> {{ total_users }}</li>
+  <li><strong>Total Orders:</strong> {{ total_orders }}</li>
+  <li><strong>Total Revenue:</strong> ₹{{ total_revenue }}</li>
+</ul>
+
+<canvas id="orderStatusChart" width="200" height="100"></canvas>
+<canvas id="paymentMethodChart" width="100" height="100" style="margin-top:40px;"></canvas>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const statusData = {{ order_status_counts|safe }};
+const paymentData = {{ payment_method_counts|safe }};
+
+// Bar chart: Order Status
+new Chart(document.getElementById("orderStatusChart"), {
+    type: 'bar',
+    data: {
+        labels: statusData.map(item => item.status),
+        datasets: [{
+            label: 'Orders by Status',
+            data: statusData.map(item => item.count),
+            backgroundColor: ['#f39c12', '#2980b9', '#2ecc71'],
+        }]
+    }
+});
+
+// Pie chart: Payment Methods
+new Chart(document.getElementById("paymentMethodChart"), {
+    type: 'pie',
+    data: {
+        labels: paymentData.map(item => item.payment_method),
+        datasets: [{
+            label: 'Payment Methods',
+            data: paymentData.map(item => item.count),
+            backgroundColor: ['#1abc9c', '#e74c3c'],
+        }]
+    }
+});
+</script>
+{% endblock %}

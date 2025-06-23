@@ -1,5 +1,6 @@
 from pathlib import Path
 from decouple import config, Csv
+import os
 
 # Base directory
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -8,6 +9,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DEBUG = config('DEBUG', default=True, cast=bool)
 SECRET_KEY = config('SECRET_KEY')
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost', cast=Csv())
+COD_ALLOWED_PINCODES = ['380001', '110001', '560001', '380013']
+
+ACCOUNT_LOGIN_METHODS = {'username', 'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
+
 
 # Application definition
 INSTALLED_APPS = [
@@ -138,3 +144,6 @@ SOCIALACCOUNT_PROVIDERS = {
         }
     }
 }
+
+RAZORPAY_KEY_ID = config('RAZORPAY_KEY_ID')
+RAZORPAY_KEY_SECRET = config('RAZORPAY_KEY_SECRET')

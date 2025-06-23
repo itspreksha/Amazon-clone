@@ -91,7 +91,12 @@
                 <strong>Total</strong><strong>₹{{ total }}</strong>
               </li>
             </ul>
-            <button class="btn btn-success w-100 mt-3" >Proceed to Checkout</button>
+          <form method="POST" action="{% url 'checkout' %}">
+  {% csrf_token %}
+  <input type="hidden" name="amount" value="{{ total }}">
+  <button type="submit" class="btn btn-success w-100 mt-3">Proceed to Checkout</button>
+</form>
+
           </div>
         </div>
       </div>
