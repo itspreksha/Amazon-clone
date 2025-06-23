@@ -11,6 +11,9 @@ SECRET_KEY = config('SECRET_KEY')
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost', cast=Csv())
 COD_ALLOWED_PINCODES = ['380001', '110001', '560001', '380013']
 
+ACCOUNT_LOGIN_METHODS = {'username', 'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
+
 
 # Application definition
 INSTALLED_APPS = [

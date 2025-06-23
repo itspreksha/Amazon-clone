@@ -38,7 +38,7 @@ class Profile(models.Model):
         null=True,
         related_name='profiles_with_default'
     )
-
+    is_blocked=models.BooleanField(default=False)
     def __str__(self):
         return f"{self.user.username}'s Profile"
 
