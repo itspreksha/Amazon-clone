@@ -1,5 +1,7 @@
 from django.urls import path,reverse
 from . import views
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
 from django.urls import reverse_lazy
 from .views import (
@@ -51,8 +53,17 @@ urlpatterns = [
     path('initiate-payment/', views.initiate_payment, name='initiate_payment'),
     path('payment/success/',views.payment_success,name='payment_success'),
     path('payment/success/', views.payment_success, name='order_success'),
+    path('payment/success/',views.cod_success_view,name='cod_success'),
     path('cod-order/',views.cod_order,name='cod_order'),
     path('thankyou/', views.thankyou, name='thankyou'),
     path('checkout/', views.checkout, name='checkout'),
+    path('check-cod/',views.check_cod_availability,name='check_cod_availability'),
+    path('cod/success/', views.cod_success_view, name='cod_success'),
+    path('notify-me/<int:product_id>/', views.notify_me, name='notify_me'),
+    path('products/',views.product_list,name='product_list'),
+    path('autocomplete/',views.product_autocomplete,name='product_autocomplete'),
+    path('search_suggestions/', views.search_suggestions, name='search_suggestions'),
 
-]
+]   
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

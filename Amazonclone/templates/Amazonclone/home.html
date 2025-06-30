@@ -1,3 +1,4 @@
+
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -10,123 +11,109 @@
  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
   <link rel="icon" href="{% static 'favicon.ico' %}">
   <!-- Static Files -->
-  <link rel="stylesheet" href="{% static 'static/styles.css' %}">
+  <link rel="stylesheet" href="{% static 'Amazonclone/styles.css' %}">
 
   <title>Online Shopping Site</title>
 </head>
 <body class="bg-light">
+<nav class="navbar navbar-dark bg-dark px-3 py-1"> 
 
-<!-- Navbar -->
-<nav class="navbar navbar-dark bg-dark px-2 py-2">
-  <div class="container-fluid flex-wrap d-flex justify-content-between align-items-center">
+  <div class="container-fluid d-flex flex-wrap justify-content-between align-items-center">
 
-    <!-- Logo -->
-    <a class="navbar-brand text-warning fw-bold fs-4" href="{% url 'home' %}">Amazon.in</a>
+    <!-- Left Side: Logo + Location -->
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+      <a class="navbar-brand text-warning fw-bold fs-5 mb-0" href="{% url 'home' %}">Amazon.in</a>
 
-   <!-- Location -->
-<div class="dropdown">
-  <a class="dropdown-toggle text-white text-decoration-none" 
-     href="#" 
-     id="locationDropdown" 
-     role="button" 
-     data-bs-toggle="dropdown" 
-     aria-expanded="false">
-    <i class="bi bi-geo-alt-fill me-1"></i> 
-    {{ selected_address.city|default:"Ahmedabad" }} {{ selected_address.pincode|default:"380059" }}
-  </a>
+      <div class="dropdown">
+        <a class="text-white dropdown-toggle text-decoration-none d-flex align-items-center" href="#" id="locationDropdown" data-bs-toggle="dropdown">
+          <i class="bi bi-geo-alt-fill me-1"></i>
+          {{ selected_address.city|default:"Ahmedabad" }} {{ selected_address.pincode|default:"380059" }}
+        </a>
+        <ul class="dropdown-menu">
+          {% for address in addresses %}
+            <li><a class="dropdown-item" href="{% url 'set_default_address' address.id %}">{{ address.city }} {{ address.pincode }}</a></li>
+          {% endfor %}
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="{% url 'manage_addresses' %}">Manage Addresses</a></li>
+        </ul>
+      </div>
+    </div>
 
-  <ul class="dropdown-menu" aria-labelledby="locationDropdown">
-  {% for address in addresses %}
-    <li>
-     <a class="dropdown-item location-item" href="#" data-href="{% url 'set_default_address' address.id %}">
-  {{ address.city }} {{ address.pincode }}
-</a>
+    <!-- Right Side: User Info + Cart + Profile + Language -->
+    <div class="d-flex align-items-center gap-4 text-white flex-wrap">
+      <!-- Username and View Orders in one line -->
+      <div class="d-flex flex-column text-end">
+        {% if user.is_authenticated %}
+          <div class="d-flex align-items-center gap-2">
+            <span>Hello, {{ user.username }}</span>
+            <a href="/logout/" class="text-white text-decoration-none">Logout</a>
+          </div>
+          <div>
+            <a href="{% url 'order_history' %}" class="btn btn-sm btn-outline-light px-2 py-1">View Orders</a>
+          </div>
+        {% else %}
+          Hello, <a href="/login/" class="text-white text-decoration-none">Sign in</a><br>
+          <a href="/login/" class="text-white text-decoration-none">Account & Lists</a>
+        {% endif %}
+      </div>
 
-    </li>
-  {% endfor %}
-  <li><hr class="dropdown-divider"></li>
-  <li>
-    <a class="dropdown-item text-primary" href="{% url 'manage_addresses' %}">
-      Manage Addresses
-    </a>
-  </li>
-</ul>
+      <a href="/cart/" class="text-white text-decoration-none">
+        <i class="bi bi-cart fs-4 me-1"></i> <strong>Cart</strong>
+      </a>
 
-</div>
+      <a href="{% url 'view_profile' %}" class="text-white text-decoration-none">
+        <i class="fas fa-user me-1"></i> Profile
+      </a>
 
-    <!-- Search + Sort Form -->
-    <form method="get" action="{% url 'home' %}" class="d-flex flex-grow-1 mx-3" style="max-width: 900px;">
-      <div class="input-group w-100">
-        <select name="category" class="form-select w-auto" style="max-width: 120px;">
-          <option value="">All</option>
-          {% for cat in categories %}
-            <option value="{{ cat.name }}" {% if request.GET.category == cat.name %}selected{% endif %}>{{ cat.name }}</option>
+      <div class="dropdown">
+        <button class="btn btn-light btn-sm dropdown-toggle d-flex align-items-center" type="button" id="languageDropdown" data-bs-toggle="dropdown">
+          <img src="https://flagcdn.com/in.svg" width="20" class="me-1"> EN
+        </button>
+        <ul class="dropdown-menu">
+          <li><a class="dropdown-item" href="#"><img src="https://flagcdn.com/fr.svg" width="20" class="me-2"> FR</a></li>
+          <li><a class="dropdown-item" href="#"><img src="https://flagcdn.com/de.svg" width="20" class="me-2"> DE</a></li>
+          <li><a class="dropdown-item" href="#"><img src="https://flagcdn.com/jp.svg" width="20" class="me-2"> JP</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+
+<!-- Search and Filter Bar -->
+<div class="bg-dark py-3 text-white">
+
+   <form method="get" action="{% url 'product_list' %}" class="d-flex align-items-center gap-2">
+        <input type="text" name="q" class="form-control form-control-sm" placeholder="Search..." value="{{ request.GET.q }}">
+        <select name="brand" class="form-select form-select-sm">
+          <option value="">All Brands</option>
+          <option value="apple" {% if request.GET.brand == 'apple' %}selected{% endif %}>Apple</option>
+          <!-- other brands -->
+        </select>
+        <select name="rating" class="form-select form-select-sm">
+          <option value="">Any</option>
+          {% for i in "12345" %}
+            <option value="{{ i }}" {% if request.GET.rating == i %}selected{% endif %}>{{ i }}+</option>
           {% endfor %}
         </select>
-        <input type="text" class="form-control" name="search" placeholder="Search for products, brands and more..." value="{{ request.GET.search|default:'' }}" />
-        <select name="sort" class="form-select w-auto" style="max-width: 100px;">
-          <option value="">Sort by</option>
-          <option value="price_asc" {% if request.GET.sort == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
-          <option value="price_desc" {% if request.GET.sort == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
-        </select>
-        <button class="btn btn-warning" type="submit"><i class="bi bi-search"></i></button>
-      </div>
-    </form>
-
-    <!-- Account Info -->
-<div class="d-flex align-items-center gap-4 text-white">
-  <div class="text-end">
-    {% if user.is_authenticated %}
-      Hello, {{ user.username }} <br>
-      <a href="/logout/" class="text-white text-decoration-none">Logout</a>
-    {% else %}
-      Hello, <a href="/login/" class="text-white text-decoration-none">Sign in</a><br>
-      <a href="/login/" class="text-white text-decoration-none">Account & Lists</a>
-    {% endif %}
-    
-  <div class="text-end align-item-right--1">
-    <a href="{% url 'order_history' %}" class="btn btn-outline-secondary me-2">View Orders</a>
-  </div>
-
-  </div>
-
-  <div class="text-end d-flex align-items-center">
-    <a href="/cart/" class="text-white text-decoration-none">
-      <i class="bi bi-cart fs-4 me-1"></i><strong>Cart</strong>
-    </a>
-     <a href="{% url 'view_profile' %}" class="nav-link d-flex align-items-center ms-3">
-        <i class="fas fa-user me-1"></i> Profile
-    </a>
-  </div>
-</div>
-
-    <!-- Language -->
-    <div class="dropdown d-flex align-items-center ms-3">
-      <button class="btn btn-light dropdown-toggle d-flex align-items-center p-1" type="button" id="languageDropdown" data-bs-toggle="dropdown">
-        <img src="https://flagcdn.com/in.svg" width="20" class="me-1"> <span id="selected-lang">EN</span>
-      </button>
-      <ul class="dropdown-menu">
-        <li><a class="dropdown-item language-option" href="#" data-lang="FR" data-flag="https://flagcdn.com/fr.svg"><img src="https://flagcdn.com/fr.svg" width="20" class="me-2"> FR</a></li>
-        <li><a class="dropdown-item language-option" href="#" data-lang="DE" data-flag="https://flagcdn.com/de.svg"><img src="https://flagcdn.com/de.svg" width="20" class="me-2"> DE</a></li>
-        <li><a class="dropdown-item language-option" href="#" data-lang="JP" data-flag="https://flagcdn.com/jp.svg"><img src="https://flagcdn.com/jp.svg" width="20" class="me-2"> JP</a></li>
-      </ul>
+        <input type="number" name="min_price" class="form-control form-control-sm" placeholder="Min" value="{{ request.GET.min_price }}">
+        <input type="number" name="max_price" class="form-control form-control-sm" placeholder="Max" value="{{ request.GET.max_price }}">
+        <button type="submit" class="btn btn-sm btn-warning"><i class="bi bi-search"></i></button>
+      </form>
     </div>
+
+<!-- Category Tiles -->
+<div class="container mt-1">
+ <div class="d-flex gap-3 flex-wrap">
+    {% for category in categories %}
+      <a class="text-white text-decoration-none small category-link" href="{% url 'home' %}?category={{ category.name|urlencode }}">
+        {{ category.name }}
+      </a>
+    {% endfor %}
   </div>
 
-  <!-- Category Tiles -->
-  <div class="container mt-0">
-    <div class="row">
-      {% for category in categories %}
-        <div class="col-6 col-md-2 text-center my-2">
-          <span class="category-icon">{{ category.icon }}</span><br>
-          <a class="categoryname text-decoration-none " style="color:white;" href="{% url 'home' %}?category={{ category.name|urlencode }}">
-            <h6>{{ category.name }}</h6>
-          </a>
-        </div>
-      {% endfor %}
-    </div>
-  </div>
 </nav>
+
+
 
 <!-- Carousel -->
 <div class="container-fluid mt-0 px-0">
@@ -193,11 +180,12 @@
     {% for product in products %}
       <div class="col-sm-6 col-md-4 col-lg-3 mb-4">
         <div class="card h-100 shadow-sm border-0">
-          {% if product.image %}
-            <img src="{% static product.image.url %}" class="card-img-top img-fluid" alt="{{ product.name }}" style="height: 250px; object-fit: cover;">
-          {% else %}
-            <img src="{% static 'default-product.jpg' %}" class="card-img-top img-fluid" alt="No image" style="height: 250px; object-fit: cover;">
-          {% endif %}
+         {% if product.image %}
+  <img src="{% static product.image %}" class="card-img-top img-fluid" alt="{{ product.name }}" style="height: 250px; object-fit: cover;">
+{% else %}
+  <img src="{% static 'default-product.jpg' %}" class="card-img-top img-fluid" alt="No image" style="height: 250px; object-fit: cover;">
+{% endif %}
+
           <div class="card-body d-flex flex-column justify-content-between">
             <h5 class="card-title">{{ product.name }}</h5>
             <p class="card-text text-success fw-bold">₹{{ product.price }}</p>
@@ -271,6 +259,43 @@
 
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const searchInput = document.getElementById('search-bar');
+  const suggestionsBox = document.getElementById('suggestions');
+
+  let timeoutId = null;
+
+  searchInput.addEventListener('input', function () {
+    const query = this.value.trim();
+    if (timeoutId) clearTimeout(timeoutId);
+
+    timeoutId = setTimeout(() => {
+      if (query.length < 2) {
+        suggestionsBox.innerHTML = '';
+        return;
+      }
+
+      fetch(`/search_suggestions/?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+          suggestionsBox.innerHTML = '';
+          data.suggestions.forEach(product => {
+            const item = document.createElement('a');
+            item.href = `/product/?id=${product.id}`;
+            item.className = 'list-group-item list-group-item-action';
+            item.textContent = product.name;
+            suggestionsBox.appendChild(item);
+          });
+        });
+    }, 200); // debounce
+  });
+
+  document.addEventListener('click', function (event) {
+    if (!suggestionsBox.contains(event.target) && event.target !== searchInput) {
+      suggestionsBox.innerHTML = '';
+    }
+  });
+</script>
 
 
 </body>
