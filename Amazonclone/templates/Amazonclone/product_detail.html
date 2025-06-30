@@ -68,11 +68,14 @@
     margin-bottom: 20px;
   }
 </style>
+<link rel="stylesheet" href="{% static 'styles.css' %}">
 
 <div class="container product-container">
   <div class="row">
     <div class="col-md-5">
-      <img src="{% static product.image.url %}" class="img-fluid rounded shadow" alt="{{ product.name }}">
+     <img src="{% static product.image %}" alt="{{ product.name }}">
+
+
     </div>
     <div class="col-md-7">
       <h2>{{ product.name }}</h2>
@@ -83,34 +86,50 @@
 
       <form method="post" action="{% url 'add_to_cart' product.id %}">
         {% csrf_token %}
-        {% if sizes %}
-        <div class="mb-2">
-          <label for="sizeSelect">Select Size:</label>
-          <select id="sizeSelect" class="form-select w-50" name="size" required>
-            {% for size in sizes %}
-              <option value="{{ size }}">{{ size }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        {% endif %}
+      
 
-        {% if colors %}
-        <div class="mb-2">
-          <label for="colorSelect">Select Color:</label>
-          <select id="colorSelect" class="form-select w-50" name="color" required>
-            {% for color in colors %}
-              <option value="{{ color }}">{{ color }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        {% endif %}
+        {% if product.stock > 0 %}
+  <p class="text-success fw-bold">In Stock: {{ product.stock }}</p>
 
-        <div class="mb-3">
-          <label for="quantity">Quantity:</label>
-          <input type="number" id="quantity" name="quantity" value="1" min="1" class="form-control w-25" required>
-        </div>
+  <form method="post" action="{% url 'add_to_cart' product.id %}">
+  {% csrf_token %}
 
-        <button type="submit" class="btn btn-success">Add to Cart</button>
+  {% if sizes %}
+  <select name="size" required>
+    {% for size in sizes %}
+      <option value="{{ size }}">{{ size }}</option>
+    {% endfor %}
+  </select>
+  {% endif %}
+
+  {% if colors %}
+  <select name="color" required>
+    {% for color in colors %}
+      <option value="{{ color }}">{{ color }}</option>
+    {% endfor %}
+  </select>
+  {% endif %}
+
+  <input type="number" name="quantity" value="1" min="1" required>
+
+  <button type="submit" class="btn btn-success">Add to Cart</button>
+</form>
+
+{% else %}
+  <p class="text-danger fw-bold">Out of stock</p>
+
+  {% if user.is_authenticated %}
+    <form method="post" action="{% url 'notify_me' product.id %}">
+      {% csrf_token %}
+      <button class="btn btn-warning">Notify me when available</button>
+    </form>
+  {% else %}
+    <p><a href="{% url 'login' %}">Login</a> to get notified when this item is back in stock.</p>
+  {% endif %}
+{% endif %}
+
+
+
       </form>
     </div>
   </div>
@@ -128,6 +147,11 @@
         </div>
         <p>{{ review.comment }}</p>
         <small class="text-muted">{{ review.created_at }}</small>
+        {% if review.image %}
+      <img src="{{ review.image.url }}" alt="Review Image" class="img-thumbnail mt-2" style="max-height:200px;">
+
+    {% endif %}
+    
       </div>
     {% endfor %}
   {% else %}
@@ -137,9 +161,10 @@
   {% if user.is_authenticated %}
     <div class="review-form">
       <h4>Leave a Review</h4>
-      <form method="POST">
+      <form method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         {{ review_form.as_p }}
+       
         <button type="submit" name="submit_review" class="btn btn-success">Submit Review</button>
       </form>
     </div>
@@ -152,7 +177,7 @@
       {% for r in related_products %}
         <div class="col-md-3 mb-4">
           <div class="card h-100 shadow-sm border-0">
-            <img src="{% static r.image.url %}" class="card-img-top" alt="{{ r.name }}" style="height: 200px; object-fit: cover;">
+            <img src="{% static r.image %}" class="card-img-top" alt="{{ r.name }}" style="height: 200px; object-fit: cover;">
             <div class="card-body text-center">
               <h6>{{ r.name }}</h6>
               <p class="text-success fw-bold">₹{{ r.price }}</p>

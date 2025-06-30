@@ -22,11 +22,32 @@
     {% endblock %}
 
     <!-- Bootstrap JS Bundle (Includes Popper.js, needed for dropdowns) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+document.getElementById("search-input").addEventListener("input", function() {
+    const query = this.value;
+    if (query.length < 2) return;
+
+    fetch(`/search_suggestions/?q=${encodeURIComponent(query)}`)
+    .then(response => response.json())
+    .then(data => {
+        const suggestions = document.getElementById("suggestions");
+        suggestions.innerHTML = "";
+        data.forEach(item => {
+            const option = document.createElement("a");
+            option.className = "dropdown-item";
+            option.href = `/product/?id=${item.id}`;
+            option.textContent = item.name;
+            suggestions.appendChild(option);
+        });
+    });
+});
+</script>
 
     <!-- Optional: JavaScript to auto-close dropdown after selection -->
     <script>
-     <script>
+    
 document.addEventListener("DOMContentLoaded", function () {
   document.querySelectorAll('.dropdown-menu a').forEach(function(item) {
     item.addEventListener('click', function () {
