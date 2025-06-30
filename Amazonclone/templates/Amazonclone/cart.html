@@ -23,7 +23,7 @@
           <tr>
             <td>
   <div class="d-flex align-items-center gap-3">
-    <img src="{% static item.product.image.url %}" alt="{{ item.product.name }}" width="80" height="80" style="object-fit: cover;">
+    <img src="{% static item.product.image %}" alt="{{ item.product.name }}" width="80" height="80" style="object-fit: cover;">
     <div>
       <strong>{{ item.product.name }}</strong><br>
       <small>₹{{ item.product.price }} each</small>

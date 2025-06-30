@@ -78,6 +78,4 @@ class AdressAdmin(admin.ModelAdmin):
 
 @admin.register(Cart)
 class CartAdmin(admin.ModelAdmin):
-    list_display=['user','product','quantity']
-
- 
+    list_display=['user','product','quantity','size','color']

@@ -19,7 +19,7 @@ from django.contrib.auth import update_session_auth_hash
 from .models import Order,OrderItem
 from .models import Review,ProductQuestion
 from .forms import ReviewForm,QuestionForm
-from .models import Address
+from .models import Address,StockAlert,StockNotification
 from .forms  import AddressForm
 import razorpay
 from django.http import HttpResponse
@@ -28,6 +28,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.core.mail import send_mail
 from django.http import HttpResponseBadRequest,JsonResponse
 from .models import Cart
+from Amazonclone.models import StockNotification 
+from django.db.models import Q
 
 COD_ALLOWED_PINCODES = ['380001', '110001', '560001','380013']
 
@@ -118,18 +120,41 @@ def product_detail(request):
             return render(request, 'Amazonclone/product_not_found.html', status=404)
     return render(request, 'Amazonclone/product_not_found.html', status=400)
 
+@login_required
 def add_to_cart(request, product_id):
-    cart = request.session.get('cart', {})
-    cart[str(product_id)] = cart.get(str(product_id), 0) + 1
-    request.session['cart'] = cart
-    return redirect('cart_view')
+    product = get_object_or_404(Product, id=product_id)
 
+    # Prevent adding out-of-stock items
+    if product.stock <= 0:
+        messages.error(request, "This product is out of stock and cannot be added to the cart.")
+        return redirect('product_detail', product_id=product.id)
+
+    if request.method == 'POST':
+        size = request.POST.get('size', '')
+        color = request.POST.get('color', '')
+        quantity = int(request.POST.get('quantity', 1))
+
+        cart_item, created = Cart.objects.get_or_create(
+            user=request.user,
+            product=product,
+            size=size,
+            color=color,
+            defaults={'quantity': quantity}
+        )
+        if not created:
+            cart_item.quantity += quantity
+            cart_item.save()
+
+        return redirect('cart_view')
+
+    return redirect('home')
+
+@login_required
 def remove_from_cart(request, product_id):
-    cart = request.session.get('cart', {})
-    cart.pop(str(product_id), None)
-    request.session['cart'] = cart
+    Cart.objects.filter(user=request.user, product_id=product_id).delete()
     return redirect('cart_view')
 
+@login_required
 def update_cart(request, product_id):
     if request.method == 'POST':
         try:
@@ -138,9 +163,12 @@ def update_cart(request, product_id):
                 quantity = 1
         except ValueError:
             quantity = 1
-        cart = request.session.get('cart', {})
-        cart[str(product_id)] = quantity
-        request.session['cart'] = cart
+
+        cart_item = Cart.objects.filter(user=request.user, product_id=product_id).first()
+        if cart_item:
+            cart_item.quantity = quantity
+            cart_item.save()
+
     return redirect('cart_view')
 
 @login_required
@@ -160,9 +188,7 @@ def cart_view(request):
         'subtotal': subtotal,
         'estimated_shipping': estimated_shipping,
         'total': total
-    })
-
-   
+    })   
 
 def get_cart_item_count(request):
     return sum(request.session.get('cart', {}).values())
@@ -237,7 +263,6 @@ def verify_otp_view(request):
 
     return render(request, 'Amazonclone/verify_otp.html')
 
-
 def resend_otp(request):
     user_id = request.session.get('otp_user_id')
     if not user_id:
@@ -295,7 +320,6 @@ def reorder(request,order_id):
         )
     messages.success(request,f"Order#{order_id}has been re-ordered successfully.")
     return redirect('order_history')
-
 
 def login_view(request):
     if request.method == 'POST':
@@ -406,7 +430,7 @@ def product_detail(request, product_id):
 
     if request.method == 'POST' and request.user.is_authenticated:
         if 'submit_review' in request.POST:
-            review_form = ReviewForm(request.POST)
+            review_form = ReviewForm(request.POST,request.FILES)
             if review_form.is_valid():
                 review = review_form.save(commit=False)
                 review.product = product
@@ -541,7 +565,6 @@ def payment_success(request):
         order.payment_status = 'Paid'
         order.save()
 
-        # ✅ Send email confirmation
         send_mail(
             subject='Order Confirmation - Payment Successful',
             message=f'Your order #{order.id} has been successfully placed and paid online.',
@@ -638,3 +661,102 @@ def check_cod_availability(request):
 
 def cod_success_view(request):
     return render(request,'Amazonclone/order_success.html')
+
+def send_order_status_email(user,order):
+    subject=f"Your Order #{order.id} is {order.status.capitalize()}"
+    message=f"Hello {user.username},\n\nYour order witj ID{order.id}is now{order.status.replace('_','').title()}.\n\nThank You!"
+    send_mail(subject,message,'yourshop@example.com',[user.email])
+
+@login_required
+def notify_me(request,product_id):
+    product=get_object_or_404(Product,id=product_id)
+    already_exists = StockNotification.objects.filter(user=request.user, product=product, notified=False).exists()
+    if not already_exists:
+        StockNotification.objects.create(user=request.user,product=product,notified=False)
+        messages.success(request,"You'll be notified when this is product is back in stock")
+    else:
+        messages.info(request,"You are already subscribed for stock updates on this item")
+    
+    return redirect('product_detail',product_id=product_id)
+
+def check_and_notify_stock(product):
+    if product.stock > 0:
+        notifications = StockNotification.objects.filter(product=product, notified=False)
+        for note in notifications:
+            send_mail(
+                subject='Item back in stock!',
+                message=f'Hi {note.user.username}, the product "{product.name}" is now available!',
+                from_email='itspreksha54@gmail.com',
+                recipient_list=[note.user.email],
+            )
+            note.notified = True
+            note.save()
+
+@login_required
+def update_stock(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+
+    if request.method == 'POST':
+        new_stock = int(request.POST.get('stock'))
+
+        old_stock = product.stock
+        product.stock = new_stock
+        product.save()
+
+        if old_stock == 0 and new_stock > 0:
+            check_and_notify_stock(product)
+
+        messages.success(request, 'Stock updated successfully.')
+        return redirect('product_detail', product_id=product.id)
+
+    return render(request, 'Amazonclone/update_stock.html', {'product': product})
+
+def product_list(request):
+    products = Product.objects.all()
+
+    # Filters
+    sort = request.GET.get('sort')
+    brand = request.GET.get('brand')
+    min_price = request.GET.get('min_price')
+    max_price = request.GET.get('max_price')
+
+    if brand:
+        products = products.filter(brand__iexact=brand)
+
+    if min_price:
+        products = products.filter(price__gte=min_price)
+
+    if max_price:
+        products = products.filter(price__lte=max_price)
+
+    # Sorting
+    if sort == 'price_asc':
+        products = products.order_by('price')
+    elif sort == 'price_desc':
+        products = products.order_by('-price')
+    elif sort == 'rating_desc':
+        products = products.order_by('-rating')
+
+    # Optional: Get unique brand list for the filter dropdown
+    brands = Product.objects.values_list('brand', flat=True).distinct()
+
+    return render(request, 'Amazonclone/product_list.html', {
+        'products': products,
+        'brands': brands,
+    })
+
+def product_autocomplete(request):
+    query=request.GET.get('term','')
+    suggestions=list(Product.objects.filter(name_icontains=query).values_list('name',flat=True)[:10])
+    return JsonResponse(suggestions,safe=False)
+
+def search_suggestions(request):
+    query = request.GET.get('q', '')
+    suggestions = []
+
+    if query:
+        matching_products = Product.objects.filter(Q(name__icontains=query))[:10]
+        suggestions = [{'id': p.id, 'name': p.name} for p in matching_products]
+
+    return JsonResponse({'suggestions': suggestions})
+

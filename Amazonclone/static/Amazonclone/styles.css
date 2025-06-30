@@ -1,0 +1,250 @@
+/* General Reset & Defaults */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f7f7f7;
+    margin: 0;
+    padding: 0;
+}
+
+/* Navbar Styling */
+.navbar {
+    background-color: #131921 !important;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    padding: 8px 15px;
+    font-size: 14px;
+    min-height: 55px;
+}
+
+/* Logo */
+.navbar-logo {
+    color: orange;
+    font-weight: bold;
+    font-size: 18px;
+    margin-right: 10px;
+    white-space: nowrap;
+}
+
+/* Search Container */
+.search-container {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+    gap: 6px;
+    max-width: 700px;
+    margin: 6px 15px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.search-container input,
+.search-container select {
+    height: 30px;
+    font-size: 13px;
+    padding: 0 6px;
+    border: 1px solid #ccc;
+    border-radius: 2px;
+}
+
+/* Search Button */
+.search-container button,
+.navbar .btn-warning {
+    height: 32px;
+    background-color: #f3a847;
+    color: black;
+    border: none;
+    padding: 0 10px;
+    cursor: pointer;
+    border-radius: 2px;
+}
+
+.navbar .btn-warning:hover,
+.search-container button:hover {
+    background-color: #dd9c2b;
+}
+
+/* Right Section */
+.navbar .nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.navbar .nav-actions small {
+    font-size: 0.75rem;
+    color: #ccc;
+}
+
+.navbar .nav-actions strong {
+    font-size: 0.85rem;
+    color: white;
+}
+
+.navbar .bi-cart {
+    font-size: 1.4rem;
+}
+
+/* Country Language Dropdown */
+.navbar .dropdown-toggle {
+    background-color: #f3a847;
+    color: black;
+    border: none;
+    padding: 4px 8px;
+    font-size: 13px;
+    border-radius: 2px;
+}
+
+/* Categories inside Navbar */
+.nav-categories {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+    margin-top: 8px;
+}
+
+.nav-categories a {
+    color: white;
+    text-decoration: none;
+    font-size: 50px;
+}
+
+.nav-categories a:hover {
+    color: #f3a847;
+}
+.category-link {
+  color: white;
+  font-size: 13px;
+  padding: 4px 6px;
+  text-decoration: none;
+}
+
+.category-link:hover {
+  color: #f3a847;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+/* Product Cards */
+.product-card {
+    border: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    height: 100%;
+    background-color: white;
+}
+
+.product-card:hover {
+    transform: scale(1.03);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.product-card img {
+    height: 220px;
+    object-fit: contain;
+    padding: 10px;
+}
+
+/* Titles */
+.card-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #222;
+}
+
+.card-text.text-danger {
+    font-weight: bold;
+}
+
+/* Category Icons */
+.category-icon {
+    font-size: 2rem;
+    color: #f3a847;
+}
+
+.categoryname {
+    color: white;
+    text-align: center;
+}
+
+.categoryname h6 {
+    margin: 0.2rem 0;
+}
+
+/* Carousel */
+.carousel-item img {
+    max-height: 100%;
+    object-fit: cover;
+    width: 100%;
+}
+
+/* Banner Images */
+.card img {
+    height: 150px;
+    object-fit: contain;
+}
+
+/* Footer */
+.footer {
+    background-color: #222;
+    padding: 20px;
+    color: white;
+    text-align: center;
+}
+
+/* Dropdown Fix */
+.dropdown-menu {
+    z-index: 1050;
+    display: block !important;
+    visibility: visible !important;
+}
+
+.dropdown-menu:not(.show) {
+    display: none !important;
+}
+
+/* Autocomplete Fix */
+#suggestions {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Optional: Custom Search Bar Container Styling */
+.search-bar-container {
+    background-color: transparent !important;
+    border: none !important;
+}
+
+/* Responsive Tweaks */
+@media (max-width: 768px) {
+    .navbar {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 10px;
+    }
+
+    .search-container {
+        flex-direction: column;
+        width: 100%;
+        margin: 10px 0;
+    }
+
+    .navbar .nav-actions {
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    .nav-categories {
+        justify-content: center;
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .navbar .dropdown-toggle {
+        width: auto;
+    }
+}
