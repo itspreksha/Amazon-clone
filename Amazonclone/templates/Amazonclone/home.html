@@ -1,122 +1,150 @@
-
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-<!-- Safe Bootstrap 5.3 via CDN (without integrity check) -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
- <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
   <link rel="icon" href="{% static 'favicon.ico' %}">
-  <!-- Static Files -->
   <link rel="stylesheet" href="{% static 'Amazonclone/styles.css' %}">
-
   <title>Online Shopping Site</title>
 </head>
 <body class="bg-light">
-<nav class="navbar navbar-dark bg-dark px-3 py-1"> 
 
-  <div class="container-fluid d-flex flex-wrap justify-content-between align-items-center">
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark py-2">
+  <div class="container-fluid">
+    <!-- Logo -->
+    <a class="navbar-brand text-warning fw-bold fs-5 animate-logo" href="{% url 'home' %}">
+      Amazon.in
+    </a>
 
-    <!-- Left Side: Logo + Location -->
-    <div class="d-flex align-items-center gap-3 flex-wrap">
-      <a class="navbar-brand text-warning fw-bold fs-5 mb-0" href="{% url 'home' %}">Amazon.in</a>
+    <!-- Toggler for mobile -->
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
+      <span class="navbar-toggler-icon"></span>
+    </button>
 
-      <div class="dropdown">
-        <a class="text-white dropdown-toggle text-decoration-none d-flex align-items-center" href="#" id="locationDropdown" data-bs-toggle="dropdown">
-          <i class="bi bi-geo-alt-fill me-1"></i>
-          {{ selected_address.city|default:"Ahmedabad" }} {{ selected_address.pincode|default:"380059" }}
-        </a>
-        <ul class="dropdown-menu">
-          {% for address in addresses %}
-            <li><a class="dropdown-item" href="{% url 'set_default_address' address.id %}">{{ address.city }} {{ address.pincode }}</a></li>
-          {% endfor %}
-          <li><hr class="dropdown-divider"></li>
-          <li><a class="dropdown-item" href="{% url 'manage_addresses' %}">Manage Addresses</a></li>
-        </ul>
-      </div>
-    </div>
+    <!-- Navbar Content -->
+    <div class="collapse navbar-collapse" id="mainNavbar">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0 d-flex align-items-center gap-3">
+        <!-- Address Dropdown -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle text-white" href="#" id="locationDropdown" role="button" data-bs-toggle="dropdown">
+            <i class="bi bi-geo-alt-fill me-1"></i>
+            {{ selected_address.city|default:"Ahmedabad" }} {{ selected_address.pincode|default:"380059" }}
+          </a>
+          <ul class="dropdown-menu">
+            {% for address in addresses %}
+              <li><a class="dropdown-item" href="{% url 'set_default_address' address.id %}">{{ address.city }} {{ address.pincode }}</a></li>
+            {% endfor %}
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="{% url 'manage_addresses' %}">Manage Addresses</a></li>
+          </ul>
+        </li>
+      </ul>
 
-    <!-- Right Side: User Info + Cart + Profile + Language -->
-    <div class="d-flex align-items-center gap-4 text-white flex-wrap">
-      <!-- Username and View Orders in one line -->
-      <div class="d-flex flex-column text-end">
+      <!-- Right Section -->
+      <ul class="navbar-nav d-flex align-items-center gap-3">
         {% if user.is_authenticated %}
-          <div class="d-flex align-items-center gap-2">
-            <span>Hello, {{ user.username }}</span>
-            <a href="/logout/" class="text-white text-decoration-none">Logout</a>
-          </div>
-          <div>
-            <a href="{% url 'order_history' %}" class="btn btn-sm btn-outline-light px-2 py-1">View Orders</a>
-          </div>
+          <li class="nav-item text-white small">Hello, {{ user.username }}</li>
+          <li class="nav-item"><a class="nav-link text-white" href="{% url 'order_history' %}">Orders</a></li>
+          <li class="nav-item"><a class="nav-link text-white" href="/logout/">Logout</a></li>
         {% else %}
-          Hello, <a href="/login/" class="text-white text-decoration-none">Sign in</a><br>
-          <a href="/login/" class="text-white text-decoration-none">Account & Lists</a>
+          <li class="nav-item"><a class="nav-link text-white" href="/login/">Sign In</a></li>
         {% endif %}
-      </div>
 
-      <a href="/cart/" class="text-white text-decoration-none">
-        <i class="bi bi-cart fs-4 me-1"></i> <strong>Cart</strong>
-      </a>
+        <!-- Cart -->
+        <li class="nav-item">
+          <a href="/cart/" class="nav-link text-white">
+            <i class="bi bi-cart fs-5 me-1"></i> Cart
+          </a>
+        </li>
 
-      <a href="{% url 'view_profile' %}" class="text-white text-decoration-none">
-        <i class="fas fa-user me-1"></i> Profile
-      </a>
+        <!-- Profile -->
+        {% if user.is_authenticated %}
+        <li class="nav-item">
+          <a href="{% url 'view_profile' %}" class="nav-link text-white">
+            <i class="bi bi-person-circle me-1"></i> Profile
+          </a>
+        </li>
+        {% endif %}
 
-      <div class="dropdown">
-        <button class="btn btn-light btn-sm dropdown-toggle d-flex align-items-center" type="button" id="languageDropdown" data-bs-toggle="dropdown">
-          <img src="https://flagcdn.com/in.svg" width="20" class="me-1"> EN
-        </button>
-        <ul class="dropdown-menu">
-          <li><a class="dropdown-item" href="#"><img src="https://flagcdn.com/fr.svg" width="20" class="me-2"> FR</a></li>
-          <li><a class="dropdown-item" href="#"><img src="https://flagcdn.com/de.svg" width="20" class="me-2"> DE</a></li>
-          <li><a class="dropdown-item" href="#"><img src="https://flagcdn.com/jp.svg" width="20" class="me-2"> JP</a></li>
-        </ul>
-      </div>
-    </div>
-  </div>
-
-
-<!-- Search and Filter Bar -->
-<div class="bg-dark py-3 text-white">
-
-   <form method="get" action="{% url 'product_list' %}" class="d-flex align-items-center gap-2">
-        <input type="text" name="q" class="form-control form-control-sm" placeholder="Search..." value="{{ request.GET.q }}">
-        <select name="brand" class="form-select form-select-sm">
-          <option value="">All Brands</option>
-          <option value="apple" {% if request.GET.brand == 'apple' %}selected{% endif %}>Apple</option>
-          <!-- other brands -->
-        </select>
-        <select name="rating" class="form-select form-select-sm">
-          <option value="">Any</option>
-          {% for i in "12345" %}
-            <option value="{{ i }}" {% if request.GET.rating == i %}selected{% endif %}>{{ i }}+</option>
-          {% endfor %}
-        </select>
-        <input type="number" name="min_price" class="form-control form-control-sm" placeholder="Min" value="{{ request.GET.min_price }}">
-        <input type="number" name="max_price" class="form-control form-control-sm" placeholder="Max" value="{{ request.GET.max_price }}">
-        <button type="submit" class="btn btn-sm btn-warning"><i class="bi bi-search"></i></button>
-      </form>
-    </div>
-
-<!-- Category Tiles -->
-<div class="container mt-1">
- <div class="d-flex gap-3 flex-wrap">
-    {% for category in categories %}
-      <a class="text-white text-decoration-none small category-link" href="{% url 'home' %}?category={{ category.name|urlencode }}">
-        {{ category.name }}
-      </a>
-    {% endfor %}
-  </div>
-
+        <!-- Language -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle text-white" href="#" role="button" data-bs-toggle="dropdown">
+            <img src="https://flagcdn.com/in.svg" width="20" class="me-1"> EN
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="#"><img src="https://flagcdn.com/fr.svg" width="20" class="me-2"> FR</a></li>
+            <li><a class="dropdown-item" href="#"><img src="https://flagcdn.com/de.svg" width="20" class="me-2"> DE</a></li>
+            <li><a class="dropdown-item" href="#"><img src="https://flagcdn.com/jp.svg" width="20" class="me-2"> JP</a></li>
+          </ul>
+        </li>
+      </ul>
+    </div> <!-- CLOSE collapse -->
+  </div> <!-- CLOSE container-fluid -->
 </nav>
 
+  
+<!-- Filter/Search Bar -->
+<div class="bg-dark py-2 px-3">
+  <form method="get" action="{% url 'product_list' %}" class="row g-2 align-items-center">
+    <!-- Search -->
+    <div class="col-12 col-md-3">
+      <input type="text" name="q" class="form-control form-control-sm" placeholder="Search..." value="{{ request.GET.q }}">
+    </div>
 
+    <!-- Brand -->
+    <div class="col-6 col-md-2">
+      <select name="brand" class="form-select form-select-sm">
+        <option value="">All Brands</option>
+        <option value="apple" {% if request.GET.brand == 'apple' %}selected{% endif %}>Apple</option>
+      </select>
+    </div>
+
+    <!-- Rating -->
+    <div class="col-6 col-md-2">
+      <select name="rating" class="form-select form-select-sm">
+        <option value="">Any</option>
+        {% for i in "12345" %}
+          <option value="{{ i }}" {% if request.GET.rating == i %}selected{% endif %}>{{ i }}+</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Min Price -->
+    <div class="col-6 col-md-2">
+      <input type="number" name="min_price" class="form-control form-control-sm" placeholder="Min" value="{{ request.GET.min_price }}">
+    </div>
+
+    <!-- Max Price -->
+    <div class="col-6 col-md-2">
+      <input type="number" name="max_price" class="form-control form-control-sm" placeholder="Max" value="{{ request.GET.max_price }}">
+    </div>
+
+    <!-- Submit Button -->
+    <div class="col-12 col-md-auto">
+      <button type="submit" class="btn btn-warning btn-sm w-100"><i class="bi bi-search"></i></button>
+    </div>
+  </form>
+</div>
+
+<div class="nav-categories">
+  <div class="container mt-1">
+    <div class="d-flex gap-3 flex-wrap">
+      {% for category in categories %}
+        <a class="text-white text-decoration-none small category-link" href="{% url 'home' %}?category={{ category.name|urlencode }}">
+          {{ category.name }}
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+  
 
 <!-- Carousel -->
-<div class="container-fluid mt-0 px-0">
+<div class="container-fluid mt-0 px-0 animate-fade">
   <div id="promoCarousel" class="carousel slide" data-bs-ride="carousel">
     <div class="carousel-inner">
       {% for deal in deals %}
@@ -133,14 +161,14 @@
     </button>
   </div>
 </div>
-
+<div class="product-card product-fade">
 <!-- Deals of the Day -->
-<div class="container mt-5">
+<div class="container mt-5 animate-fade">
   <h3 class="mb-4">🔥 Deals of the Day</h3>
   <div class="row">
     {% for product in deals_of_day %}
       <div class="col-6 col-md-4 mb-4">
-        <div class="card h-100 shadow-sm">
+        <div class="card h-100 shadow-sm product-card">
           <img src="{% static product.img %}" class="card-img-top p-3" alt="{{ product.name }}">
           <div class="card-body">
             <h6 class="card-title">{{ product.name }}</h6>
@@ -153,9 +181,9 @@
   </div>
 </div>
 
-<!-- Featured, Best Sellers, Trending -->
+<!-- Sections -->
 {% for section in product_sections %}
-  <div class="container mt-4">
+  <div class="container mt-4 animate-fade">
     <h3>{{ section.0 }}</h3>
     <div class="row">
       {% for product in section.1 %}
@@ -173,19 +201,14 @@
   </div>
 {% endfor %}
 
-<!-- Products Grid -->
-<div class="container mt-5">
+<!-- Products -->
+<div class="container mt-5 animate-fade">
   <h2 class="mb-4">Products</h2>
   <div class="row">
     {% for product in products %}
       <div class="col-sm-6 col-md-4 col-lg-3 mb-4">
-        <div class="card h-100 shadow-sm border-0">
-         {% if product.image %}
-  <img src="{% static product.image %}" class="card-img-top img-fluid" alt="{{ product.name }}" style="height: 250px; object-fit: cover;">
-{% else %}
-  <img src="{% static 'default-product.jpg' %}" class="card-img-top img-fluid" alt="No image" style="height: 250px; object-fit: cover;">
-{% endif %}
-
+        <div class="card h-100 shadow-sm border-0 product-card">
+          <img src="{% static product.image|default:'default-product.jpg' %}" class="card-img-top img-fluid" alt="{{ product.name }}" style="height: 250px; object-fit: cover;">
           <div class="card-body d-flex flex-column justify-content-between">
             <h5 class="card-title">{{ product.name }}</h5>
             <p class="card-text text-success fw-bold">₹{{ product.price }}</p>
@@ -209,97 +232,33 @@
     {% endif %}
   </ul>
 </nav>
-
+</div>
 <!-- Footer -->
 <footer class="footer text-center mt-5 py-4 bg-dark text-white">
   © 2025 Amazon.in Clone. All Rights Reserved.
 </footer>
 
-<!-- Language Selector Script -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    // Auto-close language dropdown (already done)
-    document.querySelectorAll('.language-option').forEach(item => {
-      item.addEventListener('click', function (e) {
-        e.preventDefault();
-        const selectedLang = this.getAttribute('data-lang');
-        const selectedFlag = this.getAttribute('data-flag');
+    const faders = document.querySelectorAll('.product-fade');
 
-        document.getElementById('selected-lang').textContent = selectedLang;
-        document.querySelector('#languageDropdown img').src = selectedFlag;
-
-        const dropdown = bootstrap.Dropdown.getOrCreateInstance(document.getElementById('languageDropdown'));
-        dropdown.hide();
-      });
-    });
-
-    // Auto-close ANY dropdown when a dropdown-item is clicked
-    document.querySelectorAll('.dropdown-menu .dropdown-item').forEach(item => {
-      item.addEventListener('click', function () {
-        const dropdownToggle = this.closest('.dropdown').querySelector('[data-bs-toggle="dropdown"]');
-        if (dropdownToggle) {
-          const dropdownInstance = bootstrap.Dropdown.getOrCreateInstance(dropdownToggle);
-          dropdownInstance.hide();
+    const observer = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target); // Remove if you only want it once
         }
       });
+    }, {
+      threshold: 0.1
     });
 
-    // Optional: Close dropdown when clicking outside
-    document.addEventListener('click', function (e) {
-      document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
-        if (!menu.contains(e.target) && !menu.previousElementSibling.contains(e.target)) {
-          const toggle = menu.previousElementSibling;
-          if (toggle && toggle.classList.contains('dropdown-toggle')) {
-            bootstrap.Dropdown.getOrCreateInstance(toggle).hide();
-          }
-        }
-      });
+    faders.forEach(el => {
+      observer.observe(el);
     });
-  });
-
-</script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-  const searchInput = document.getElementById('search-bar');
-  const suggestionsBox = document.getElementById('suggestions');
-
-  let timeoutId = null;
-
-  searchInput.addEventListener('input', function () {
-    const query = this.value.trim();
-    if (timeoutId) clearTimeout(timeoutId);
-
-    timeoutId = setTimeout(() => {
-      if (query.length < 2) {
-        suggestionsBox.innerHTML = '';
-        return;
-      }
-
-      fetch(`/search_suggestions/?q=${encodeURIComponent(query)}`)
-        .then(response => response.json())
-        .then(data => {
-          suggestionsBox.innerHTML = '';
-          data.suggestions.forEach(product => {
-            const item = document.createElement('a');
-            item.href = `/product/?id=${product.id}`;
-            item.className = 'list-group-item list-group-item-action';
-            item.textContent = product.name;
-            suggestionsBox.appendChild(item);
-          });
-        });
-    }, 200); // debounce
-  });
-
-  document.addEventListener('click', function (event) {
-    if (!suggestionsBox.contains(event.target) && event.target !== searchInput) {
-      suggestionsBox.innerHTML = '';
-    }
   });
 </script>
 
-
-</body>
 </html>
-
-
-
