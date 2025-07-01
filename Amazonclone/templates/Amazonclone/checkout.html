@@ -1,5 +1,112 @@
 {% extends "Amazonclone/base.html" %}
 {% block content %}
+<style>
+  body {
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', sans-serif;
+  }
+
+  h2, h4, h5 {
+    color: #ff9900;
+    font-weight: 600;
+  }
+
+  .btn-primary {
+    background-color: #ff9900;
+    border: none;
+    font-weight: bold;
+    transition: all 0.3s ease;
+  }
+
+  .btn-primary:hover {
+    background-color: #e68a00;
+    transform: scale(1.03);
+    box-shadow: 0 4px 12px rgba(255, 153, 0, 0.4);
+  }
+
+  .btn-success {
+    background-color: #28a745;
+    border: none;
+    font-weight: bold;
+    transition: all 0.3s ease;
+  }
+
+  .btn-success:hover {
+    background-color: #218838;
+    transform: scale(1.03);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+  }
+
+  .form-control {
+    background-color:rgb(255, 255, 255);
+    border: 1px solid #333;
+    border-radius: 8px;
+    color:rgb(11, 10, 10);
+    padding: 12px 14px;
+    transition: all 0.3s ease;
+  }
+
+  .form-control:focus {
+    border-color: #ff9900;
+    box-shadow: 0 0 0 0.2rem rgba(201, 184, 159, 0.25);
+    background-color:rgb(186, 84, 20);
+  }
+
+  .form-control::placeholder {
+    color: #cccccc;
+    font-size: 0.95rem;
+  }
+
+  label {
+    font-weight: bold;
+    color: #ff9900;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .card {
+    background: linear-gradient(145deg, #1e1e1e, #2a2a2a);
+    border: none;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    color: #fff;
+    transition: transform 0.3s ease;
+  }
+
+  .card:hover {
+    transform: scale(1.015);
+  }
+
+  .input-group {
+    margin-bottom: 15px;
+  }
+
+  hr {
+    border-top: 1px solid #ff9900;
+    opacity: 0.5;
+    margin: 2rem 0;
+  }
+
+  #cod-check-form {
+    background-color: #ffffff;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15pxrgb(99, 49, 49);
+    max-width: 600px;s
+    margin: auto;
+  }
+
+  .btn:focus {
+    box-shadow: none;
+  }
+
+  .alert {
+    max-width: 600px;
+    margin: 20px auto;
+    font-weight: 500;
+  }
+</style>
 <div class="container mt-5 text-center">
   <h2>Choose Payment Method</h2>
   <h4 class="mt-3">Total Amount: ₹{{ amount }}</h4>
@@ -8,15 +115,16 @@
   <form method="POST" action="{% url 'initiate_payment' %}">
     {% csrf_token %}
     <input type="hidden" name="amount" value="{{ amount }}">
-    <button type="submit" class="btn btn-success btn-lg mt-3 w-50">Pay Online</button>
+    <button type="submit" class="btn btn-success btn-lg mt-3 w-50">💳 Pay Online</button>
   </form>
+
   <hr class="my-4">
 
   <!-- COD Section -->
   <h4>Cash on Delivery</h4>
   {% if user.is_authenticated and user.address_set.exists %}
     {% with address=user.address_set.first %}
-      <div class="card p-3 mb-3">
+      <div class="card p-3 mb-3 mx-auto" style="max-width: 600px;">
         <h5>Deliver To:</h5>
         <p><strong>{{ address.name }}</strong></p>
         <p>{{ address.phone }}</p>
@@ -26,7 +134,7 @@
       </div>
     {% endwith %}
   {% else %}
-    <form id="cod-check-form" onsubmit="event.preventDefault(); checkCODFromInput();">
+    <form id="cod-check-form" onsubmit="event.preventDefault(); checkCODFromInput();" class="text-start mx-auto" style="max-width: 600px;">
       {% csrf_token %}
       <label>Enter Full Address:</label>
       <input type="text" id="name" placeholder="Name" class="form-control mb-2" required>
@@ -35,16 +143,19 @@
       <input type="text" id="city" placeholder="City" class="form-control mb-2" required>
       <input type="text" id="state" placeholder="State" class="form-control mb-2" required>
       <input type="text" id="pincode-input" placeholder="Pincode" class="form-control mb-2" required>
-      <button type="submit" class="btn btn-primary">Check COD</button>
+      <div class="text-center">
+        <button type="submit" class="btn btn-primary">Check COD</button>
+      </div>
     </form>
   {% endif %}
 
   <div id="cod-message" class="mt-3"></div>
+
   <div id="place-order-container" class="mt-3" style="display:none">
     <form id="place-cod-order-form" onsubmit="event.preventDefault(); placeCODOrder();">
       <input type="hidden" name="pincode" id="confirmed-pincode">
       {% csrf_token %}
-      <button type="submit" class="btn btn-success">Place COD Order</button>
+      <button type="submit" class="btn btn-success">🛍️ Place COD Order</button>
     </form>
   </div>
 </div>

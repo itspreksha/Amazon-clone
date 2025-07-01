@@ -67,7 +67,7 @@ def home(request):
     else:
         products = products.order_by('-created_at')
 
-    paginator = Paginator(products, 6)
+    paginator = Paginator(products, 8)
     products_page = paginator.get_page(page)
 
     categories = [
@@ -79,23 +79,32 @@ def home(request):
             {'name': 'iPhone 16', 'price': '₹73,500', 'img': 'images/iphone16.jpg'},
             {'name': 'Harry Potter Book Set', 'price': '₹949', 'img': 'images/harrypotter.jpg'},
             {'name': 'Titan Watch', 'price': '₹1695', 'img': 'images/titanwatch.jpg'},
+            {'name': 'Crosscut Furniture Wooden Floor Lamp with Shelf (Natural Jute). LED Bulb Included', 'price': '₹2,749', 'img': 'images/lamp.jpg'},
         ]),
         ('Best Sellers', [
             {'name': 'Samsung Galaxy S24 Ultra', 'price': '₹99,700', 'img': 'images/S24Ultra.jpg'},
             {'name': 'Nike Sports Shoes', 'price': '₹11,245', 'img': 'images/nikeshoes.jpg'},
+            {'name': 'Portable Mini Cooler Rechargeable Air Conditioner Water Cooler Small AC', 'price': '₹439', 'img': 'images/cooler.jpg'},
+            {'name': 'Kamiliant American Tourister Harrier Small,Medium & Large 360 Degree Spinner Suitcase', 'price': '₹5,299', 'img': 'images/suitcase.jpg'},
+             
         ]),
         ('Trending Items', [
             {'name': 'Noise Airwave Max5', 'price': '₹4,999', 'img': 'images/Bluetooth.jpg'},
             {'name': "Levi's Jeans", 'price': '₹1,799', 'img': 'images/levisjeans.jpg'},
+            {'name': 'SWAROVSKI Women Emily Bracelet, White, Rhodium Plated', 'price': '₹8,290', 'img': 'images/swaroski.jpg'},
+            {'name': "Pure Vegan Leather Tote Bag for Women, Fully Embossed, Handbag, Shoulder Bag, Black", 'price': '₹394', 'img': 'images/purse.jpg'},
         ])
+
     ]
 
     context = {
         'categories': categories,
         'product_sections': product_sections,
         'deals': [
-            {'banner_img': 'images/dealoftheday1.png'},
-            {'banner_img': 'images/dealoftheday2.png'},
+            {'banner_img': 'images/bg2.jpg'},
+            {'banner_img': 'images/bg3.jpg'},
+            {'banner_img': 'images/bg1.jpg'},
+            {'banner_img': 'images/bg4.jpg'},
         ],
         'deals_of_day': [
             {'name': 'Boat Bluetooth Speaker', 'price': '₹1,299', 'img': 'images/boatspeaker.jpg', 'discount': '35% Off'},
