@@ -86,7 +86,6 @@
   </div> <!-- CLOSE container-fluid -->
 </nav>
 
-  
 <!-- Filter/Search Bar -->
 <div class="bg-dark py-2 px-3">
   <form method="get" action="{% url 'product_list' %}" class="row g-2 align-items-center">
@@ -100,6 +99,8 @@
       <select name="brand" class="form-select form-select-sm">
         <option value="">All Brands</option>
         <option value="apple" {% if request.GET.brand == 'apple' %}selected{% endif %}>Apple</option>
+        <option value="apple" {% if request.GET.brand == 'Samsung' %}selected{% endif %}>Samsung</option>
+        
       </select>
     </div>
 
@@ -141,7 +142,6 @@
     </div>
   </div>
 </div>
-  
 
 <!-- Carousel -->
 <div class="container-fluid mt-0 px-0 animate-fade">
