@@ -722,37 +722,37 @@ def update_stock(request, product_id):
 
 def product_list(request):
     products = Product.objects.all()
+    categories = Category.objects.all()
 
-    # Filters
-    sort = request.GET.get('sort')
-    brand = request.GET.get('brand')
+    # Search
+    q = request.GET.get('q')
+    if q:
+        products = products.filter(name__icontains=q)
+
+    # Category filter
+    category_id = request.GET.get('category')
+    if category_id:
+        products = products.filter(category__id=category_id)
+
+    # Rating filter
+    rating = request.GET.get('rating')
+    if rating:
+        products = products.filter(rating__gte=rating)
+
+    # Price filters
     min_price = request.GET.get('min_price')
-    max_price = request.GET.get('max_price')
-
-    if brand:
-        products = products.filter(brand__iexact=brand)
-
     if min_price:
         products = products.filter(price__gte=min_price)
 
+    max_price = request.GET.get('max_price')
     if max_price:
         products = products.filter(price__lte=max_price)
 
-    # Sorting
-    if sort == 'price_asc':
-        products = products.order_by('price')
-    elif sort == 'price_desc':
-        products = products.order_by('-price')
-    elif sort == 'rating_desc':
-        products = products.order_by('-rating')
-
-    # Optional: Get unique brand list for the filter dropdown
-    brands = Product.objects.values_list('brand', flat=True).distinct()
-
-    return render(request, 'Amazonclone/product_list.html', {
+    context = {
         'products': products,
-        'brands': brands,
-    })
+        'categories': categories,
+    }
+    return render(request, 'Amazonclone/product_list.html', context)
 
 def product_autocomplete(request):
     query=request.GET.get('term','')
