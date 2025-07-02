@@ -67,7 +67,7 @@ def home(request):
     else:
         products = products.order_by('-created_at')
 
-    paginator = Paginator(products, 6)
+    paginator = Paginator(products, 8)
     products_page = paginator.get_page(page)
 
     categories = [
@@ -79,23 +79,32 @@ def home(request):
             {'name': 'iPhone 16', 'price': '₹73,500', 'img': 'images/iphone16.jpg'},
             {'name': 'Harry Potter Book Set', 'price': '₹949', 'img': 'images/harrypotter.jpg'},
             {'name': 'Titan Watch', 'price': '₹1695', 'img': 'images/titanwatch.jpg'},
+            {'name': 'Crosscut Furniture Wooden Floor Lamp with Shelf (Natural Jute). LED Bulb Included', 'price': '₹2,749', 'img': 'images/lamp.jpg'},
         ]),
         ('Best Sellers', [
             {'name': 'Samsung Galaxy S24 Ultra', 'price': '₹99,700', 'img': 'images/S24Ultra.jpg'},
             {'name': 'Nike Sports Shoes', 'price': '₹11,245', 'img': 'images/nikeshoes.jpg'},
+            {'name': 'Portable Mini Cooler Rechargeable Air Conditioner Water Cooler Small AC', 'price': '₹439', 'img': 'images/cooler.jpg'},
+            {'name': 'Kamiliant American Tourister Harrier Small,Medium & Large 360 Degree Spinner Suitcase', 'price': '₹5,299', 'img': 'images/suitcase.jpg'},
+             
         ]),
         ('Trending Items', [
             {'name': 'Noise Airwave Max5', 'price': '₹4,999', 'img': 'images/Bluetooth.jpg'},
             {'name': "Levi's Jeans", 'price': '₹1,799', 'img': 'images/levisjeans.jpg'},
+            {'name': 'SWAROVSKI Women Emily Bracelet, White, Rhodium Plated', 'price': '₹8,290', 'img': 'images/swaroski.jpg'},
+            {'name': "Pure Vegan Leather Tote Bag for Women, Fully Embossed, Handbag, Shoulder Bag, Black", 'price': '₹394', 'img': 'images/purse.jpg'},
         ])
+
     ]
 
     context = {
         'categories': categories,
         'product_sections': product_sections,
         'deals': [
-            {'banner_img': 'images/dealoftheday1.png'},
-            {'banner_img': 'images/dealoftheday2.png'},
+            {'banner_img': 'images/bg2.jpg'},
+            {'banner_img': 'images/bg3.jpg'},
+            {'banner_img': 'images/bg1.jpg'},
+            {'banner_img': 'images/bg4.jpg'},
         ],
         'deals_of_day': [
             {'name': 'Boat Bluetooth Speaker', 'price': '₹1,299', 'img': 'images/boatspeaker.jpg', 'discount': '35% Off'},
@@ -713,37 +722,37 @@ def update_stock(request, product_id):
 
 def product_list(request):
     products = Product.objects.all()
+    categories = Category.objects.all()
 
-    # Filters
-    sort = request.GET.get('sort')
-    brand = request.GET.get('brand')
+    # Search
+    q = request.GET.get('q')
+    if q:
+        products = products.filter(name__icontains=q)
+
+    # Category filter
+    category_id = request.GET.get('category')
+    if category_id:
+        products = products.filter(category__id=category_id)
+
+    # Rating filter
+    rating = request.GET.get('rating')
+    if rating:
+        products = products.filter(rating__gte=rating)
+
+    # Price filters
     min_price = request.GET.get('min_price')
-    max_price = request.GET.get('max_price')
-
-    if brand:
-        products = products.filter(brand__iexact=brand)
-
     if min_price:
         products = products.filter(price__gte=min_price)
 
+    max_price = request.GET.get('max_price')
     if max_price:
         products = products.filter(price__lte=max_price)
 
-    # Sorting
-    if sort == 'price_asc':
-        products = products.order_by('price')
-    elif sort == 'price_desc':
-        products = products.order_by('-price')
-    elif sort == 'rating_desc':
-        products = products.order_by('-rating')
-
-    # Optional: Get unique brand list for the filter dropdown
-    brands = Product.objects.values_list('brand', flat=True).distinct()
-
-    return render(request, 'Amazonclone/product_list.html', {
+    context = {
         'products': products,
-        'brands': brands,
-    })
+        'categories': categories,
+    }
+    return render(request, 'Amazonclone/product_list.html', context)
 
 def product_autocomplete(request):
     query=request.GET.get('term','')
