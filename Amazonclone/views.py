@@ -707,15 +707,27 @@ def checkout(request):
         estimated_shipping = 50
         total_amount = subtotal + estimated_shipping
 
+        # Pre-fill address form from user profile
+        profile = request.user.profile
+        address_form = AddressForm(initial={
+            'name': request.user.get_full_name(),
+            'phone': profile.phone,
+            'address_line': profile.address,
+            'city': profile.city,
+            'state': profile.state,
+            'pincode': profile.pincode,
+        })
+
         return render(request, 'Amazonclone/checkout.html', {
             'cart_items': cart_items,
             'subtotal': subtotal,
             'estimated_shipping': estimated_shipping,
             'amount': total_amount,
+            'address_form': address_form,
         })
 
     return redirect('cart_view')
- 
+
 @login_required
 def order_success(request):
     return render(request,'Amazonclone/order_success.html')

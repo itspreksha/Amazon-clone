@@ -2,6 +2,10 @@
 {% load static %}
 
 {% block content %}
+<a class="navbar-brand text-warning fw-bold fs-5 animate-logo" href="{% url 'home' %}">
+   Amazon.in
+</a>
+
 <div class="container mt-4">
     <h2 class="text-center" style="color: orange; font-weight: bold;">Your Profile</h2>
     
@@ -23,4 +27,5 @@
         </div>
     </div>
 </div>
+
 {% endblock %}

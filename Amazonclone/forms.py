@@ -27,7 +27,7 @@ class ProfileForm(forms.ModelForm):
 
     class Meta:
         model = Profile
-        fields = ['phone', 'address', 'city']
+        fields = ['phone', 'address', 'city', 'state', 'pincode']
 
     def save(self, commit=True):
         profile = super().save(commit=False)
@@ -35,6 +35,11 @@ class ProfileForm(forms.ModelForm):
         user.email = self.cleaned_data['email']
         user.first_name = self.cleaned_data['first_name']
         user.last_name = self.cleaned_data['last_name']
+        
+        profile.city = self.cleaned_data['city']
+        profile.state = self.cleaned_data['state']
+        profile.pincode = self.cleaned_data['pincode']
+
         if commit:
             user.save()
             profile.save()

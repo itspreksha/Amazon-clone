@@ -75,6 +75,8 @@ class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     phone = models.CharField(max_length=15, blank=True)
     city = models.CharField(max_length=100, blank=True)
+    state = models.CharField(max_length=100, blank=True)
+    pincode = models.CharField(max_length=10, blank=True)
     otp = models.CharField(max_length=6, blank=True, null=True)
     email_verified = models.BooleanField(default=False)
     address=models.TextField(blank=True)
