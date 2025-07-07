@@ -26,23 +26,47 @@
     </button>
 
     <!-- Navbar Content -->
-    <div class="collapse navbar-collapse" id="mainNavbar">
+<div class="collapse navbar-collapse" id="mainNavbar">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0 d-flex align-items-center gap-3">
-        <!-- Address Dropdown -->
+
+        <!-- Location Dropdown -->
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle text-white" href="#" id="locationDropdown" role="button" data-bs-toggle="dropdown">
-            <i class="bi bi-geo-alt-fill me-1"></i>
-            {{ selected_address.city|default:"Ahmedabad" }} {{ selected_address.pincode|default:"380059" }}
+          <a class="nav-link dropdown-toggle text-white" href="#" id="locationDropdown" data-bs-toggle="dropdown">
+            <span id="dropdownLocationText">
+              <i class="bi bi-geo-alt-fill me-1"></i>
+              {{ selected_address.city|default:"Ahmedabad" }} {{ selected_address.pincode|default:"380013" }}
+            </span>
           </a>
-          <ul class="dropdown-menu">
+          <ul class="dropdown-menu p-3" aria-labelledby="locationDropdown" style="min-width: 300px;">
+            <li>
+              <button type="button" class="btn btn-sm btn-outline-primary mb-2" onclick="getLocation()">📍 Detect My Location</button>
+              <p id="status" class="text-muted small">📍 Click to detect your location</p>
+              <input type="text" id="confirmedAddress" class="form-control form-control-sm mb-2" placeholder="Confirm/edit address">
+            </li>
+            <li>
+              <div id="map" style="height: 200px; width: 100%; display: none; margin-bottom: 10px;"></div>
+            </li>
+            <li>
+              <form id="location-form" method="POST" action="{% url 'save_location' %}">
+                {% csrf_token %}
+                <input type="hidden" name="latitude" id="latitude">
+                <input type="hidden" name="longitude" id="longitude">
+                <input type="hidden" name="city" id="city">
+                <input type="hidden" name="country" id="country">
+                <button type="submit" class="btn btn-success w-100" id="submit-btn" style="display: none;">✅ Save and Use Location</button>
+              </form>
+            </li>
+            <li><hr class="dropdown-divider"></li>
             {% for address in addresses %}
               <li><a class="dropdown-item" href="{% url 'set_default_address' address.id %}">{{ address.city }} {{ address.pincode }}</a></li>
             {% endfor %}
             <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="{% url 'manage_addresses' %}">Manage Addresses</a></li>
+            <li><a class="dropdown-item text-primary" href="{% url 'manage_addresses' %}">Manage Addresses</a></li>
           </ul>
         </li>
       </ul>
+</div>
+
 
       <!-- Right Section -->
       <ul class="navbar-nav d-flex align-items-center gap-3">
@@ -239,8 +263,140 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+
 <script>
+  let map, marker;
+
+  // Triggered when user clicks "Detect My Location"
+  function getLocation() {
+    const status = document.getElementById("status");
+    status.textContent = "📡 Detecting location...";
+
+    if (!navigator.geolocation) {
+      status.textContent = "❌ Geolocation not supported.";
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(showPosition, showError);
+  }
+
+  function showPosition(position) {
+  const lat = position.coords.latitude;
+  const lon = position.coords.longitude;
+
+  // Fill hidden fields
+  document.getElementById("latitude").value = lat;
+  document.getElementById("longitude").value = lon;
+
+  // Show map
+  const mapDiv = document.getElementById("map");
+  mapDiv.style.display = "block";
+
+  if (!map) {
+    map = L.map('map').setView([lat, lon], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+    marker = L.marker([lat, lon]).addTo(map);
+  } else {
+    map.setView([lat, lon], 13);
+    marker.setLatLng([lat, lon]);
+  }
+
+  // Reverse Geocoding
+  fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`)
+    .then(response => response.json())
+    .then(data => {
+      const address = data.display_name || '';
+      const city = data.address.city || data.address.town || data.address.village || '';
+      const country = data.address.country || '';
+      const pincode = data.address.postcode || '';
+
+      // Update fields
+      document.getElementById("city").value = city;
+      document.getElementById("country").value = country;
+      document.getElementById("confirmedAddress").value = address;
+
+      // Update status text
+      document.getElementById("status").textContent = `📍 ${city}, ${country}`;
+      document.getElementById("submit-btn").style.display = "block";
+
+      // Update dropdown label
+      const dropdownText = document.querySelector('#dropdownLocationText');
+      if (dropdownText) {
+        dropdownText.innerHTML = `<i class="bi bi-geo-alt-fill me-1"></i> ${city} ${pincode}`;
+      }
+
+      // ✅ Now enabled: save to backend
+      saveLocationToBackend(lat, lon);  // ✅ UNCOMMENTED
+    })
+    .catch(error => {
+      console.error("Reverse geocoding error:", error);
+      document.getElementById("status").textContent = "❌ Failed to reverse geocode.";
+      document.getElementById("submit-btn").style.display = "block";
+    });
+}
+function showError(error) {
+  const status = document.getElementById("status");
+  switch (error.code) {
+    case error.PERMISSION_DENIED:
+      status.textContent = "❌ User denied the request for Geolocation.";
+      break;
+    case error.POSITION_UNAVAILABLE:
+      status.textContent = "❌ Location information is unavailable.";
+      break;
+    case error.TIMEOUT:
+      status.textContent = "❌ The request to get user location timed out.";
+      break;
+    default:
+      status.textContent = "❌ An unknown error occurred.";
+      break;
+  }
+}
+function saveLocationToBackend(lat, lon) {
+  console.log("Sending to backend:", lat, lon);
+
+  fetch('/save-location/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',  // critical for Django to detect JSON
+      'X-CSRFToken': getCookie('csrftoken')  // optional due to @csrf_exempt
+    },
+    body: JSON.stringify({
+      latitude: lat,
+      longitude: lon
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    console.log('Backend response:', data);
+  })
+  .catch(error => {
+    console.error('Error saving location:', error);
+  });
+}
+
+ function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+
+  // Optional: animation logic for fading in product cards
   document.addEventListener("DOMContentLoaded", function () {
     const faders = document.querySelectorAll('.product-fade');
 
@@ -248,17 +404,14 @@
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           entry.target.classList.add('visible');
-          observer.unobserve(entry.target); // Remove if you only want it once
+          observer.unobserve(entry.target);
         }
       });
-    }, {
-      threshold: 0.1
-    });
+    }, { threshold: 0.1 });
 
-    faders.forEach(el => {
-      observer.observe(el);
-    });
+    faders.forEach(el => observer.observe(el));
   });
 </script>
 
+</body>
 </html>

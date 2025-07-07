@@ -5,19 +5,22 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .utils import check_and_notify_stock 
 from django.core.mail import send_mail
-
+from decimal import Decimal
+from django.db.models import Avg
 # Create your models here.
 class Product(models.Model):
-    Category_choices= [
-        ('electronics' , 'Electronics'),
-        ('fashion','Fashion'),
-        ('books','Books'),
-        ('appliances','Appliances'),
+    CATEGORY_CHOICES = [
+        ('electronics', 'Electronics'),
+        ('fashion', 'Fashion'),
+        ('books', 'Books'),
+        ('appliances', 'Appliances'),
     ]
+
     name = models.CharField(max_length=100)
-    price = models.FloatField()
+    base_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # Fixed base price
+    price = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # 👈 Changed from FloatField
     description = models.TextField()
-    category = models.CharField(max_length=100, choices=Category_choices)
+    category = models.CharField(max_length=100, choices=CATEGORY_CHOICES)
     image = models.ImageField(upload_to='images/')
     created_at = models.DateTimeField(auto_now_add=True)
     sizes = models.CharField(max_length=100, blank=True)
@@ -25,25 +28,23 @@ class Product(models.Model):
     specifications = models.TextField(blank=True)
     rating = models.FloatField(default=0.0)
     stock = models.PositiveIntegerField(default=0)
+    view_count = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         return self.name
 
     def save(self, *args, **kwargs):
         notify = False
-
-        # Check if stock is changing from 0 to >0
         if self.pk:
             old = Product.objects.get(pk=self.pk)
             if old.stock == 0 and self.stock > 0:
                 notify = True
-
         super().save(*args, **kwargs)
-
         if notify:
             self.notify_waiting_users()
 
     def notify_waiting_users(self):
+        from .models import StockNotification  # Assuming it's in the same app
         notifications = StockNotification.objects.filter(product=self, notified=False)
         for note in notifications:
             send_mail(
@@ -55,6 +56,21 @@ class Product(models.Model):
             )
             note.notified = True
             note.save()
+
+    def update_rating(self):
+        avg_rating = self.reviews.aggregate(avg=Avg('rating'))['avg']
+        self.rating = round(avg_rating or 0.0, 2)
+        self.save(update_fields=['rating'])
+
+    def register_view(self):
+        self.view_count += 1
+
+        # 🔁 Price increases 1% every 10 views, max 2x
+        increase_factor = Decimal("1.00") + (Decimal(self.view_count) // Decimal("10")) * Decimal("0.01")
+        increase_factor = min(increase_factor, Decimal("2.00"))
+
+        self.price = (self.base_price * increase_factor).quantize(Decimal("0.01"))
+        self.save(update_fields=['view_count', 'price'])
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     phone = models.CharField(max_length=15, blank=True)
@@ -110,12 +126,12 @@ class OrderItem(models.Model):
 def review_image_upload_path(instance, filename):
     return f'reviews/user_{instance.user.id}/{filename}'
 class Review(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE,related_name='reviews')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    rating = models.PositiveIntegerField(choices=[(i,i) for i in range(1,6)])
-    comment=models.TextField()
+    rating = models.PositiveSmallIntegerField()  # 1 to 5
+    comment = models.TextField()
     image = models.ImageField(upload_to='review_images/', blank=True, null=True)
-    created_at=models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Review by{self.user.username}'s Review on {self.product.name}"
@@ -174,3 +190,14 @@ class StockNotification(models.Model):
 def trigger_stock_notification(sender,instance,**kwargs):
     if instance.stock>0:
         check_and_notify_stock(instance)
+
+class UserLocation(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6)
+    city = models.CharField(max_length=100, blank=True, null=True)
+    country = models.CharField(max_length=100, blank=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.city}, {self.country}"
