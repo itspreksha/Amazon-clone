@@ -63,7 +63,8 @@ urlpatterns = [
     path('products/',views.product_list,name='product_list'),
     path('autocomplete/',views.product_autocomplete,name='product_autocomplete'),
     path('search_suggestions/', views.search_suggestions, name='search_suggestions'),
-
-]   
+    path('save-location/', views.save_location, name='save_location'),
+    path('set-password/',views.set_password,name='set_password'),
+]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

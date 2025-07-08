@@ -30,6 +30,13 @@ from django.http import HttpResponseBadRequest,JsonResponse
 from .models import Cart
 from Amazonclone.models import StockNotification 
 from django.db.models import Q
+from .models import UserLocation,Address
+from django.http import JsonResponse,HttpResponseNotAllowed
+import json
+from django.views.decorators.http import require_http_methods
+from decimal import Decimal
+from django.contrib.auth.forms import SetPasswordForm
+from django.contrib import messages
 
 COD_ALLOWED_PINCODES = ['380001', '110001', '560001','380013']
 
@@ -67,7 +74,7 @@ def home(request):
     else:
         products = products.order_by('-created_at')
 
-    paginator = Paginator(products, 6)
+    paginator = Paginator(products, 8)
     products_page = paginator.get_page(page)
 
     categories = [
@@ -79,23 +86,32 @@ def home(request):
             {'name': 'iPhone 16', 'price': '₹73,500', 'img': 'images/iphone16.jpg'},
             {'name': 'Harry Potter Book Set', 'price': '₹949', 'img': 'images/harrypotter.jpg'},
             {'name': 'Titan Watch', 'price': '₹1695', 'img': 'images/titanwatch.jpg'},
+            {'name': 'Crosscut Furniture Wooden Floor Lamp with Shelf (Natural Jute). LED Bulb Included', 'price': '₹2,749', 'img': 'images/lamp.jpg'},
         ]),
         ('Best Sellers', [
             {'name': 'Samsung Galaxy S24 Ultra', 'price': '₹99,700', 'img': 'images/S24Ultra.jpg'},
             {'name': 'Nike Sports Shoes', 'price': '₹11,245', 'img': 'images/nikeshoes.jpg'},
+            {'name': 'Portable Mini Cooler Rechargeable Air Conditioner Water Cooler Small AC', 'price': '₹439', 'img': 'images/cooler.jpg'},
+            {'name': 'Kamiliant American Tourister Harrier Small,Medium & Large 360 Degree Spinner Suitcase', 'price': '₹5,299', 'img': 'images/suitcase.jpg'},
+             
         ]),
         ('Trending Items', [
             {'name': 'Noise Airwave Max5', 'price': '₹4,999', 'img': 'images/Bluetooth.jpg'},
             {'name': "Levi's Jeans", 'price': '₹1,799', 'img': 'images/levisjeans.jpg'},
+            {'name': 'SWAROVSKI Women Emily Bracelet, White, Rhodium Plated', 'price': '₹8,290', 'img': 'images/swaroski.jpg'},
+            {'name': "Pure Vegan Leather Tote Bag for Women, Fully Embossed, Handbag, Shoulder Bag, Black", 'price': '₹394', 'img': 'images/purse.jpg'},
         ])
+
     ]
 
     context = {
         'categories': categories,
         'product_sections': product_sections,
         'deals': [
-            {'banner_img': 'images/dealoftheday1.png'},
-            {'banner_img': 'images/dealoftheday2.png'},
+            {'banner_img': 'images/bg2.jpg'},
+            {'banner_img': 'images/bg3.jpg'},
+            {'banner_img': 'images/bg1.jpg'},
+            {'banner_img': 'images/bg4.jpg'},
         ],
         'deals_of_day': [
             {'name': 'Boat Bluetooth Speaker', 'price': '₹1,299', 'img': 'images/boatspeaker.jpg', 'discount': '35% Off'},
@@ -119,6 +135,35 @@ def product_detail(request):
         except Product.DoesNotExist:
             return render(request, 'Amazonclone/product_not_found.html', status=404)
     return render(request, 'Amazonclone/product_not_found.html', status=400)
+
+@csrf_exempt
+def save_location(request):
+    print(">>> save_location VIEW CALLED <<<")
+
+    if request.method == 'POST':
+        # First try JSON
+        if request.headers.get('Content-Type') == 'application/json':
+            try:
+                print("Raw JSON request body:", request.body)
+                data = json.loads(request.body)
+            except json.JSONDecodeError as e:
+                return JsonResponse({"status": "error", "message": f"Invalid JSON: {str(e)}"}, status=400)
+        else:
+            # Fallback: handle form-encoded POST data
+            data = request.POST
+            print("Form data:", data)
+
+        # Extract latitude and longitude
+        latitude = data.get('latitude')
+        longitude = data.get('longitude')
+
+        if latitude is None or longitude is None:
+            return JsonResponse({"status": "error", "message": "Missing coordinates"}, status=400)
+
+        print("✅ Received:", latitude, longitude)
+        return JsonResponse({"status": "success", "message": "Location saved"})
+
+    return HttpResponseNotAllowed(['POST'])
 
 @login_required
 def add_to_cart(request, product_id):
@@ -300,7 +345,7 @@ def view_profile(request):
             messages.success(request, "Profile updated successfully.")
     else:
         form = ProfileForm(instance=profile)
-    return render(request, 'Amazonclone/profile.html', {'form': form})
+    return render(request, 'Amazonclone/profile.html', {'profile': profile})
 
 @login_required
 def order_history(request):
@@ -373,24 +418,49 @@ class CustomPasswordResetView(PasswordResetView):
         )
         return super().form_valid(form)
 
-
 @login_required
 def edit_profile(request):
-    profile, _ = Profile.objects.get_or_create(user=request.user)
+    user = request.user
+    profile, created = Profile.objects.get_or_create(user=user)
+
     if request.method == 'POST':
-        request.user.username = request.POST.get('name', '')
-        request.user.email = request.POST.get('email', '')
-        profile.phone = request.POST.get('phone', '')
-        profile.address = request.POST.get('address', '')  
-        profile.city = request.POST.get('city', '')
-        request.user.save()
+        username = request.POST.get('username', '').strip()
+        name = request.POST.get('name', '').strip()
+        email = request.POST.get('email', '').strip()
+        phone = request.POST.get('phone', '').strip()
+        city = request.POST.get('city', '').strip()
+        address = request.POST.get('address', '').strip()
+
+        # Validate username
+        if not username:
+            messages.error(request, 'Username cannot be empty.')
+            return redirect('edit_profile')
+
+        # Check if username already exists (and not the current user)
+        if username != user.username and User.objects.filter(username=username).exclude(pk=user.pk).exists():
+            messages.error(request, 'Username already taken.')
+            return redirect('edit_profile')
+
+        # Save user model
+        user.username = username
+        user.first_name = name
+        user.email = email
+        user.save()
+
+        # Save profile model
+        profile.phone = phone
+        profile.city = city
+        profile.address = address
         profile.save()
-        messages.success(request, "Profile updated successfully.")
+
+        messages.success(request, 'Profile updated successfully!')
         return redirect('view_profile')
-    return render(request, 'Amazonclone/edit_profile.html', {'profile': profile})
+
+    return render(request, 'Amazonclone/edit_profile.html', {
+        'profile': profile
+    })
 
 
-@login_required
 def change_password(request):
     if request.method == 'POST':
         form = PasswordChangeForm(user=request.user, data=request.POST)
@@ -403,6 +473,23 @@ def change_password(request):
         form = PasswordChangeForm(user=request.user)
         return render(request, 'Amazonclone/change_password.html', {'form': form})
     
+
+@login_required
+def set_password(request):
+    if request.user.has_usable_password():
+        return redirect('home')
+
+    if request.method == 'POST':
+        form = SetPasswordForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)
+            messages.success(request, "Password set successfully!")
+            return redirect('home')
+    else:
+        form = SetPasswordForm(request.user)
+
+    return render(request, 'Amazonclone/set_password.html', {'form': form})
 @login_required
 def view_orders(request):
     orders = Order.objects.filter(user=request.user, is_ordered=True)
@@ -419,6 +506,13 @@ def total_price(self):
 
 def product_detail(request, product_id):
     product = get_object_or_404(Product, id=product_id)
+
+    # Track views once per session
+    session_key = f'viewed_product_{product.id}'
+    if not request.session.get(session_key, False):
+        product.register_view()
+        request.session[session_key] = True
+
     related_products = Product.objects.filter(category=product.category).exclude(id=product.id)[:4]
     sizes = [s.strip() for s in product.sizes.split(",")] if product.sizes else []
     colors = [c.strip() for c in product.colors.split(",")] if product.colors else []
@@ -429,23 +523,27 @@ def product_detail(request, product_id):
     question_form = QuestionForm()
 
     if request.method == 'POST' and request.user.is_authenticated:
-        if 'submit_review' in request.POST:
-            review_form = ReviewForm(request.POST,request.FILES)
-            if review_form.is_valid():
-                review = review_form.save(commit=False)
-                review.product = product
-                review.user = request.user
-                review.save()
-                return redirect('product_detail', product_id=product.id)
+     if 'submit_review' in request.POST:
+        review_form = ReviewForm(request.POST, request.FILES)
+        if review_form.is_valid():
+            review = review_form.save(commit=False)
+            review.product = product
+            review.user = request.user
+            review.save()
 
-        elif 'submit_question' in request.POST:
-            question_form = QuestionForm(request.POST)
-            if question_form.is_valid():
-                question = question_form.save(commit=False)
-                question.product = product
-                question.user = request.user
-                question.save()
-                return redirect('product_detail', product_id=product.id)
+            # ⭐ Recalculate product rating
+            product.update_rating()
+
+            return redirect('product_detail', product_id=product.id)
+
+     elif 'submit_question' in request.POST:
+        question_form = QuestionForm(request.POST)
+        if question_form.is_valid():
+            question = question_form.save(commit=False)
+            question.product = product
+            question.user = request.user
+            question.save()
+            return redirect('product_detail', product_id=product.id)
 
     return render(request, 'Amazonclone/product_detail.html', {
         'product': product,
@@ -628,15 +726,27 @@ def checkout(request):
         estimated_shipping = 50
         total_amount = subtotal + estimated_shipping
 
+        # Pre-fill address form from user profile
+        profile = request.user.profile
+        address_form = AddressForm(initial={
+            'name': request.user.get_full_name(),
+            'phone': profile.phone,
+            'address_line': profile.address,
+            'city': profile.city,
+            'state': profile.state,
+            'pincode': profile.pincode,
+        })
+
         return render(request, 'Amazonclone/checkout.html', {
             'cart_items': cart_items,
             'subtotal': subtotal,
             'estimated_shipping': estimated_shipping,
             'amount': total_amount,
+            'address_form': address_form,
         })
 
     return redirect('cart_view')
- 
+
 @login_required
 def order_success(request):
     return render(request,'Amazonclone/order_success.html')

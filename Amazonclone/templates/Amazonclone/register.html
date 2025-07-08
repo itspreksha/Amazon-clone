@@ -1,31 +1,149 @@
 {% extends "Amazonclone/base.html" %}
-{% block content %}
 {% load socialaccount %}
+{% block content %}
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<style>
+    body {
+        background-color: #f7f7f7;
+    }
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
- 
-<div class="container mt-5" style="max-width:500px;">
-    <h2 class="mb-4 text-center text-warning">Create Your Amazon Account</h2>
+    .register-container {
+        max-width: 500px;
+        margin: 60px auto;
+        padding: 40px 30px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1);
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+    h2 {
+        text-align: center;
+        color: #333;
+        margin-bottom: 25px;
+        font-weight: 700;
+    }
+
+    form p {
+        margin-bottom: 15px;
+    }
+
+    label {
+        font-weight: 600;
+        color: #555;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="email"] {
+        width: 100%;
+        padding: 10px;
+        font-size: 15px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        margin-top: 5px;
+        transition: border-color 0.3s;
+    }
+
+    input:focus {
+        border-color: #f3a847;
+        outline: none;
+    }
+
+    .btn-warning {
+        width: 100%;
+        padding: 10px;
+        font-weight: 600;
+        font-size: 16px;
+        margin-top: 10px;
+        border-radius: 5px;
+        background-color: #f3a847;
+        border: none;
+        color: #111;
+    }
+
+    .btn-warning:hover {
+        background-color: #dd9c2b;
+    }
+
+    .alert {
+        animation: fadeIn 0.5s ease-in-out;
+    }
+
+    .google-login {
+        display: inline-block;
+        margin-top: 15px;
+        padding: 10px 12px;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        text-align: center;
+        width: 100%;
+        color: #333;
+        text-decoration: none;
+        transition: background 0.3s, box-shadow 0.3s;
+    }
+
+    .google-login:hover {
+        background: #f5f5f5;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .google-login i {
+        margin-right: 8px;
+        color: #db4437;
+    }
+
+    p a {
+        color: #007bff;
+        text-decoration: none;
+    }
+
+    p a:hover {
+        text-decoration: underline;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+</style>
+
+<div class="register-container">
+    <h2 class="text-warning">Create Your Amazon Account</h2>
+
     {% if messages %}
-  {% for message in messages %}
-    <div class="alert alert-warning">{{ message }}</div>
-  {% endfor %}
-{% endif %}
+        {% for message in messages %}
+            <div class="alert alert-warning">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
 
-   <form method="post" action="{% url 'register' %}">
+    <form method="post" action="{% url 'register' %}">
         {% csrf_token %}
-        {{form.as_p}}
-        
-        <button type="submit" class="btn btn-warning w-100">Continue</button>
-      <a href="{% provider_login_url 'google' %}">Login with Google</a>
-
-
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-warning">Continue</button>
+        <a href="{% provider_login_url 'google' %}" class="google-login">
+            <i class="bi bi-google"></i> Login with Google
+        </a>
     </form>
-    <p class="mt-3">Already have an account?
-        <a href="{% url 'login' %}">Sign in</a>
+
+    <p class="mt-3 text-center">
+        Already have an account? <a href="{% url 'login' %}">Sign in</a>
     </p>
 </div>
 

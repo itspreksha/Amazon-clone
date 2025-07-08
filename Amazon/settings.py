@@ -13,6 +13,7 @@ COD_ALLOWED_PINCODES = ['380001', '110001', '560001', '380013']
 
 ACCOUNT_LOGIN_METHODS = {'username', 'email'}
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
+ACCOUNT_ADAPTER = "Amazonclone.adapter.CustomAccountAdapter"
 
 
 # Application definition
