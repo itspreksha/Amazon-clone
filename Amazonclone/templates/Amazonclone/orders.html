@@ -1,0 +1,57 @@
+{% extends 'Amazonclone/base.html' %}
+
+{% block content %}
+<a class="navbar-brand text-warning fw-bold fs-5 animate-logo" href="{% url 'home' %}">
+   Amazon.in
+</a>
+
+<div class="container py-5">
+    <h2 class="mb-4 text-center text-warning fw-bold">Your Orders</h2>
+
+    {% if orders %}
+        {% for order in orders %}
+            <div class="card shadow-sm mb-4 border-primary">
+                <div class="card-header bg-primary text-white d-flex justify-content-between">
+                    <span><strong>Order Date:</strong> {{ order.order_date|date:"d M Y, H:i" }}</span>
+                    <span><strong>Status:</strong> 
+                        {% if order.status == "Pending" %}
+                            <span class="badge bg-warning text-dark">{{ order.status }}</span>
+                        {% elif order.status == "Shipped" %}
+                            <span class="badge bg-info text-dark">{{ order.status }}</span>
+                        {% elif order.status == "Delivered" %}
+                            <span class="badge bg-success">{{ order.status }}</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ order.status }}</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group mb-3">
+                        {% for item in order.items.all %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ item.product.name }}</strong> <br>
+                                    Quantity: {{ item.quantity }}
+                                </div>
+                                <span class="text-end fw-bold">₹{{ item.price }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="fw-bold">Total: ₹{{ order.total_price }}</h5>
+                        <form action="{% url 'reorder' order.id %}" method="POST">
+                            {% csrf_token %}
+                            <button class="btn btn-outline-warning">Re-order</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-info text-center">
+            You haven't placed any orders yet.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

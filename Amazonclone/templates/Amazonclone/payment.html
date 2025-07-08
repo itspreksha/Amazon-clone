@@ -1,0 +1,51 @@
+{% extends "Amazonclone/base.html" %}
+{% block content %}
+<div class="container mt-5 text-center">
+  <h2>Processing Payment...</h2>
+</div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    const options = {
+        "key": "{{ key_id }}", // Razorpay key
+        "amount": "{{ amount }}", // In paisa
+        "currency": "INR",
+        "name": "Amazon Clone",
+        "description": "Order Payment",
+        "order_id": "{{ payment.id }}", // Razorpay order ID
+
+        "prefill": {
+            "name": "{{ user.username }}",
+            "email": "{{ user.email }}"
+        },
+
+        "theme": {
+            "color": "#3399cc"
+        },
+
+        "handler": function (response) {
+            // Send all 3 values to the backend
+            const data = new URLSearchParams();
+            data.append("payment_id", response.razorpay_payment_id);
+            data.append("order_id", response.razorpay_order_id);
+            data.append("signature", response.razorpay_signature);
+
+            fetch("/payment/success/", {
+                method: "POST",
+                body: data,
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.order_id) {
+                    window.location.href = `/thankyou/?order_id=${data.order_id}`;
+                } else {
+                    alert("Payment verification failed!");
+                }
+            });
+        }
+    };
+
+    const rzp = new Razorpay(options);
+    rzp.open();
+</script>
+{% endblock %}
