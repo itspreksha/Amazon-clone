@@ -35,6 +35,8 @@ from django.http import JsonResponse,HttpResponseNotAllowed
 import json
 from django.views.decorators.http import require_http_methods
 from decimal import Decimal
+from django.contrib.auth.forms import SetPasswordForm
+from django.contrib import messages
 
 COD_ALLOWED_PINCODES = ['380001', '110001', '560001','380013']
 
@@ -471,6 +473,23 @@ def change_password(request):
         form = PasswordChangeForm(user=request.user)
         return render(request, 'Amazonclone/change_password.html', {'form': form})
     
+
+@login_required
+def set_password(request):
+    if request.user.has_usable_password():
+        return redirect('home')
+
+    if request.method == 'POST':
+        form = SetPasswordForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)
+            messages.success(request, "Password set successfully!")
+            return redirect('home')
+    else:
+        form = SetPasswordForm(request.user)
+
+    return render(request, 'Amazonclone/set_password.html', {'form': form})
 @login_required
 def view_orders(request):
     orders = Order.objects.filter(user=request.user, is_ordered=True)
