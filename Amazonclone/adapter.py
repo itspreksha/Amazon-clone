@@ -3,6 +3,7 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 
+#adapter.py
 class CustomAccountAdapter(DefaultAccountAdapter):
     def get_login_redirect_url(self, request):
         user = request.user
