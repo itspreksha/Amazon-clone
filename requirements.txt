@@ -1,0 +1,8 @@
+Django>=5.2,<6.0
+gunicorn
+whitenoise
+dj-database-url
+python-decouple
+python-dotenv
+psycopg2-binary
+django-allauth
