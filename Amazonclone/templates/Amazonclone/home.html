@@ -4,200 +4,166 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-  <link rel="icon" href="{% static 'favicon.ico' %}">
-  <link rel="stylesheet" href="{% static 'Amazonclone/styles.css' %}">
+  <script src="https://kit.fontawesome.com/6ec9c7cfba.js" crossorigin="anonymous"></script>
+
+  <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'styles.css' %}">
   <title>Online Shopping Site</title>
 </head>
 <body class="bg-light">
 
-<!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark py-2">
-  <div class="container-fluid">
+<!-- Top Navbar -->
+<nav class="navbar navbar-dark bg-dark px-2 py-2">
+  <div class="container-fluid flex-wrap d-flex justify-content-between align-items-center">
+
     <!-- Logo -->
-    <a class="navbar-brand text-warning fw-bold fs-5 animate-logo" href="{% url 'home' %}">
-      Amazon.in
-    </a>
+    <a class="navbar-brand text-warning fw-bold fs-4" href="{% url 'home' %}">Amazon.in</a>
 
-    <!-- Toggler for mobile -->
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
-      <span class="navbar-toggler-icon"></span>
-    </button>
+    <!-- Location -->
+    <div class="d-none d-md-block text-white me-3">
+      <small>Deliver to</small><br>
+      <div class="dropdown">
+        <a class="dropdown-toggle text-white text-decoration-none" href="#" id="locationDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="bi bi-geo-alt-fill me-1"></i> Ahmedabad 380059
+        </a>
+        <ul class="dropdown-menu">
+          <li><a class="dropdown-item" href="#">Delhi 110001</a></li>
+          <li><a class="dropdown-item" href="#">Mumbai 400001</a></li>
+          <li><a class="dropdown-item" href="#">Bangalore 560001</a></li>
+        </ul>
+      </div>
+    </div>
 
-    <!-- Navbar Content -->
-<div class="collapse navbar-collapse" id="mainNavbar">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0 d-flex align-items-center gap-3">
+    <!-- Search + Sort Form -->
+    <form method="get" action="{% url 'home' %}" class="d-flex flex-grow-1 mx-3" style="max-width: 900px;">
+      <div class="input-group w-100">
 
-        <!-- Location Dropdown -->
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle text-white" href="#" id="locationDropdown" data-bs-toggle="dropdown">
-            <span id="dropdownLocationText">
-              <i class="bi bi-geo-alt-fill me-1"></i>
-              {{ selected_address.city|default:"Ahmedabad" }} {{ selected_address.pincode|default:"380013" }}
-            </span>
-          </a>
-          <ul class="dropdown-menu p-3" aria-labelledby="locationDropdown" style="min-width: 300px;">
-            <li>
-              <button type="button" class="btn btn-sm btn-outline-primary mb-2" onclick="getLocation()">📍 Detect My Location</button>
-              <p id="status" class="text-muted small">📍 Click to detect your location</p>
-              <input type="text" id="confirmedAddress" class="form-control form-control-sm mb-2" placeholder="Confirm/edit address">
-            </li>
-            <li>
-              <div id="map" style="height: 200px; width: 100%; display: none; margin-bottom: 10px;"></div>
-            </li>
-            <li>
-              <form id="location-form" method="POST" action="{% url 'save_location' %}">
-                {% csrf_token %}
-                <input type="hidden" name="latitude" id="latitude">
-                <input type="hidden" name="longitude" id="longitude">
-                <input type="hidden" name="city" id="city">
-                <input type="hidden" name="country" id="country">
-                <button type="submit" class="btn btn-success w-100" id="submit-btn" style="display: none;">✅ Save and Use Location</button>
-              </form>
-            </li>
-            <li><hr class="dropdown-divider"></li>
-            {% for address in addresses %}
-              <li><a class="dropdown-item" href="{% url 'set_default_address' address.id %}">{{ address.city }} {{ address.pincode }}</a></li>
-            {% endfor %}
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item text-primary" href="{% url 'manage_addresses' %}">Manage Addresses</a></li>
-          </ul>
-        </li>
+        <!-- Category Dropdown -->
+        <select name="category" class="form-select w-auto" style="max-width: 120px;">
+          <option value="">All</option>
+          {% for cat in categories %}
+            <option value="{{ cat.name }}" {% if request.GET.category == cat.name %}selected{% endif %}>
+              {{ cat.name }}
+            </option>
+          {% endfor %}
+        </select>
+
+        <!-- Search Field -->
+        <input type="text" class="form-control" name="search" placeholder="Search for products, brands and more..." value="{{ request.GET.search|default:'' }}" />
+
+        <!-- Sort Dropdown -->
+        <select name="sort" class="form-select w-auto" style="max-width: 100px;">
+          <option value="">Sort by</option>
+          <option value="price_asc" {% if request.GET.sort == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+          <option value="price_desc" {% if request.GET.sort == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+        </select>
+
+        <!-- Submit Button -->
+        <button class="btn btn-warning" type="submit"><i class="bi bi-search"></i></button>
+      </div>
+    </form>
+
+    <!-- Account, Orders, Cart -->
+    <div class="d-flex align-items-center gap-4 text-white">
+      <div class="text-end">
+        <div class="small">Hello, sign in</div>
+        <a href="#" class="text-white text-decoration-none"><strong>Account & Lists</strong></a>
+      </div>
+      <div class="text-end">
+        <div class="small">Returns</div>
+        <a href="#" class="text-white text-decoration-none"><strong>& Orders</strong></a>
+      </div>
+      <div class="text-end d-flex align-items-center">
+        <a href="#" class="text-white text-decoration-none">
+          <i class="bi bi-cart fs-4 me-1"></i><strong>Cart</strong>
+        </a>
+      </div>
+    </div>
+
+    <!-- Language -->
+    <div class="dropdown d-flex align-items-center ms-3">
+      <button class="btn btn-light dropdown-toggle d-flex align-items-center p-1" type="button" id="languageDropdown" data-bs-toggle="dropdown">
+        <img src="https://flagcdn.com/in.svg" width="20" class="me-1"> <span>EN</span>
+      </button>
+      <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="#"><img src="https://flagcdn.com/fr.svg" width="20" class="me-2"> FR</a></li>
+        <li><a class="dropdown-item" href="#"><img src="https://flagcdn.com/de.svg" width="20" class="me-2"> DE</a></li>
+        <li><a class="dropdown-item" href="#"><img src="https://flagcdn.com/jp.svg" width="20" class="me-2"> JP</a></li>
       </ul>
+    </div>
+  </div>
+
+
+<!-- CATEGORY TILES SECTION -->
+<div class="container mt-0">
+  <div class="row">
+    {% for category in categories %}
+      <div class="col-6 col-md-2 text-center my-2">
+        <span class="category-icon">{{ category.icon }}</span><br>
+        <a class="categoryname text-decoration-none" href="{% url 'home' %}?category={{ category.name|urlencode }}">
+          <h6>{{ category.name }}</h6>
+        </a>
+      </div>
+    {% endfor %}
+  </div>
 </div>
 
-
-      <!-- Right Section -->
-      <ul class="navbar-nav d-flex align-items-center gap-3">
-        {% if user.is_authenticated %}
-          <li class="nav-item text-white small">Hello, {{ user.username }}</li>
-          <li class="nav-item"><a class="nav-link text-white" href="{% url 'order_history' %}">Orders</a></li>
-          <li class="nav-item"><a class="nav-link text-white" href="/logout/">Logout</a></li>
-        {% else %}
-          <li class="nav-item"><a class="nav-link text-white" href="/login/">Sign In</a></li>
-        {% endif %}
-
-        <!-- Cart -->
-        <li class="nav-item">
-          <a href="/cart/" class="nav-link text-white">
-            <i class="bi bi-cart fs-5 me-1"></i> Cart
-          </a>
-        </li>
-
-        <!-- Profile -->
-        {% if user.is_authenticated %}
-        <li class="nav-item">
-          <a href="{% url 'view_profile' %}" class="nav-link text-white">
-            <i class="bi bi-person-circle me-1"></i> Profile
-          </a>
-        </li>
-        {% endif %}
-
-        <!-- Language -->
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle text-white" href="#" role="button" data-bs-toggle="dropdown">
-            <img src="https://flagcdn.com/in.svg" width="20" class="me-1"> EN
-          </a>
-          <ul class="dropdown-menu dropdown-menu-end">
-            <li><a class="dropdown-item" href="#"><img src="https://flagcdn.com/fr.svg" width="20" class="me-2"> FR</a></li>
-            <li><a class="dropdown-item" href="#"><img src="https://flagcdn.com/de.svg" width="20" class="me-2"> DE</a></li>
-            <li><a class="dropdown-item" href="#"><img src="https://flagcdn.com/jp.svg" width="20" class="me-2"> JP</a></li>
-          </ul>
-        </li>
-      </ul>
-    </div> <!-- CLOSE collapse -->
-  </div> <!-- CLOSE container-fluid -->
 </nav>
 
-  
-<!-- Filter/Search Bar -->
-<div class="bg-dark py-2 px-3">
-  <form method="get" action="{% url 'product_list' %}" class="row g-2 align-items-center">
-    <!-- Search -->
-    <div class="col-12 col-md-3">
-      <input type="text" name="q" class="form-control form-control-sm" placeholder="Search..." value="{{ request.GET.q }}">
-    </div>
-
-    <!-- Brand -->
-    <div class="col-6 col-md-2">
-      <select name="brand" class="form-select form-select-sm">
-        <option value="">All Brands</option>
-        <option value="apple" {% if request.GET.brand == 'apple' %}selected{% endif %}>Apple</option>
-      </select>
-    </div>
-
-    <!-- Rating -->
-    <div class="col-6 col-md-2">
-      <select name="rating" class="form-select form-select-sm">
-        <option value="">Any</option>
-        {% for i in "12345" %}
-          <option value="{{ i }}" {% if request.GET.rating == i %}selected{% endif %}>{{ i }}+</option>
-        {% endfor %}
-      </select>
-    </div>
-
-    <!-- Min Price -->
-    <div class="col-6 col-md-2">
-      <input type="number" name="min_price" class="form-control form-control-sm" placeholder="Min" value="{{ request.GET.min_price }}">
-    </div>
-
-    <!-- Max Price -->
-    <div class="col-6 col-md-2">
-      <input type="number" name="max_price" class="form-control form-control-sm" placeholder="Max" value="{{ request.GET.max_price }}">
-    </div>
-
-    <!-- Submit Button -->
-    <div class="col-12 col-md-auto">
-      <button type="submit" class="btn btn-warning btn-sm w-100"><i class="bi bi-search"></i></button>
-    </div>
-  </form>
-</div>
-
-<div class="nav-categories">
-  <div class="container mt-1">
-    <div class="d-flex gap-3 flex-wrap">
-      {% for category in categories %}
-        <a class="text-white text-decoration-none small category-link" href="{% url 'home' %}?category={{ category.name|urlencode }}">
-          {{ category.name }}
-        </a>
-      {% endfor %}
-    </div>
-  </div>
-</div>
-  
-
-<!-- Carousel -->
-<div class="container-fluid mt-0 px-0 animate-fade">
-  <div id="promoCarousel" class="carousel slide" data-bs-ride="carousel">
-    <div class="carousel-inner">
-      {% for deal in deals %}
-        <div class="carousel-item {% if forloop.first %}active{% endif %}">
-          <img src="{% static deal.banner_img %}" class="d-block w-100" alt="Banner">
+<div class="container mt-0 " style="width:500%;">
+    <div id="promoCarousel" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-inner">
+            {% for deal in deals %}
+            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                <img src="{% static deal.banner_img %}" class="d-block w-100" alt="Banner">
+            </div>
+            {% endfor %}
         </div>
-      {% endfor %}
+        <button class="carousel-control-prev" type="button" data-bs-target="#promoCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon"></span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#promoCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon"></span>
+        </button>
     </div>
-    <button class="carousel-control-prev" type="button" data-bs-target="#promoCarousel" data-bs-slide="prev">
-      <span class="carousel-control-prev-icon"></span>
-    </button>
-    <button class="carousel-control-next" type="button" data-bs-target="#promoCarousel" data-bs-slide="next">
-      <span class="carousel-control-next-icon"></span>
-    </button>
-  </div>
 </div>
-<div class="product-card product-fade">
+
 <!-- Deals of the Day -->
-<div class="container mt-5 animate-fade">
-  <h3 class="mb-4">🔥 Deals of the Day</h3>
+<div class="container mt-5">
+    <h3 class="mb-4">🔥 Deals of the Day</h3>
+    <div class="row">
+        {% for product in deals_of_day %}
+        <div class="col-6 col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <img src="{% static  product.img %}" class="card-img-top p-3" alt="{{ product.name }}">
+                <div class="card-body">
+                    <h6 class="card-title">{{ product.name }}</h6>
+                    <p class="card-text text-success fw-bold">{{ product.price }}</p>
+                    <span class="badge bg-danger">{{ product.discount }}</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+
+
+
+<!-- FEATURED PRODUCTS -->
+<div class="container mt-4">
+  <h3>Featured Products</h3>
   <div class="row">
-    {% for product in deals_of_day %}
-      <div class="col-6 col-md-4 mb-4">
-        <div class="card h-100 shadow-sm product-card">
-          <img src="{% static product.img %}" class="card-img-top p-3" alt="{{ product.name }}">
+    {% for product in featured_products %}
+      <div class="col-6 col-md-3 my-2">
+        <div class="card product-card">
+          <img src="{% static product.img %}" class="card-img-top" alt="{{ product.name }}">
           <div class="card-body">
             <h6 class="card-title">{{ product.name }}</h6>
-            <p class="card-text text-success fw-bold">{{ product.price }}</p>
-            <span class="badge bg-danger">{{ product.discount }}</span>
+            <p class="card-text text-danger">{{ product.price }}</p>
           </div>
         </div>
       </div>
@@ -205,38 +171,53 @@
   </div>
 </div>
 
-<!-- Sections -->
-{% for section in product_sections %}
-  <div class="container mt-4 animate-fade">
-    <h3>{{ section.0 }}</h3>
-    <div class="row">
-      {% for product in section.1 %}
-        <div class="col-6 col-md-3 my-2">
-          <div class="card product-card">
-            <img src="{% static product.img %}" class="card-img-top" alt="{{ product.name }}">
-            <div class="card-body">
-              <h6 class="card-title">{{ product.name }}</h6>
-              <p class="card-text text-danger">{{ product.price }}</p>
-            </div>
+<!-- BEST SELLERS -->
+<div class="container mt-4">
+  <h3>Best Sellers</h3>
+  <div class="row">
+    {% for product in best_sellers %}
+      <div class="col-6 col-md-3 my-2">
+        <div class="card product-card">
+          <img src="{% static product.img %}" class="card-img-top" alt="{{ product.name }}">
+          <div class="card-body">
+            <h6 class="card-title">{{ product.name }}</h6>
+            <p class="card-text text-danger">{{ product.price }}</p>
           </div>
         </div>
-      {% endfor %}
-    </div>
+      </div>
+    {% endfor %}
   </div>
-{% endfor %}
+</div>
 
-<!-- Products -->
-<div class="container mt-5 animate-fade">
+<!-- TRENDING ITEMS -->
+<div class="container mt-4">
+  <h3>Trending Items</h3>
+  <div class="row">
+    {% for product in trending_items %}
+      <div class="col-6 col-md-3 my-2">
+        <div class="card product-card">
+          <img src="{% static product.img %}" class="card-img-top" alt="{{ product.name }}">
+          <div class="card-body">
+            <h6 class="card-title">{{ product.name }}</h6>
+            <p class="card-text text-danger">{{ product.price }}</p>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="container mt-5">
   <h2 class="mb-4">Products</h2>
   <div class="row">
     {% for product in products %}
       <div class="col-sm-6 col-md-4 col-lg-3 mb-4">
-        <div class="card h-100 shadow-sm border-0 product-card">
-          <img src="{% static product.image|default:'default-product.jpg' %}" class="card-img-top img-fluid" alt="{{ product.name }}" style="height: 250px; object-fit: cover;">
+        <div class="card h-100 shadow-sm border-0">
+          <img src="{% static product.image.url %}" class="card-img-top img-fluid" alt="{{ product.name }}" style="height: 250px; object-fit: cover;">
           <div class="card-body d-flex flex-column justify-content-between">
             <h5 class="card-title">{{ product.name }}</h5>
             <p class="card-text text-success fw-bold">₹{{ product.price }}</p>
-            <a href="{% url 'product_detail' product.id %}" class="btn btn-primary mt-auto">View</a>
+            <a href="{% url 'product_detail' %}?id={{ product.id }}" class="btn btn-primary mt-auto">View</a>
           </div>
         </div>
       </div>
@@ -244,174 +225,34 @@
   </div>
 </div>
 
-<!-- Pagination -->
 <nav>
   <ul class="pagination">
     {% if products.has_previous %}
-      <li class="page-item"><a class="page-link" href="?page={{products.previous_page_number}}">Previous</a></li>
+    <li class="page-item"><a class="page-link" href="?page=={{products.previous_page_number}}">Previous</a></li>
     {% endif %}
-    <li class="page-item active"><span class="page-link">{{ products.number }}</span></li>
+    <li class="page-item active"><span class="page-link">{{products.number}}</span></li>
     {% if products.has_next %}
-      <li class="page-item"><a class="page-link" href="?page={{products.next_page_number}}">Next</a></li>
+    <li class="page-item"><a class="page-link" href="?page={{products.next_page_number}}">Next</a></li>
     {% endif %}
   </ul>
 </nav>
-</div>
-<!-- Footer -->
-<footer class="footer text-center mt-5 py-4 bg-dark text-white">
+<footer class="footer text-center mt-5 py-4 bg-light text-muted back" Styles="background-color:grey;">
   © 2025 Amazon.in Clone. All Rights Reserved.
 </footer>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<!-- Leaflet -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-
 <script>
-  let map, marker;
+  document.querySelectorAll('.language-option').forEach(item = {
+    item.addEventListener('click', function (e) {
+      e.preventDefault();
 
-  // Triggered when user clicks "Detect My Location"
-  function getLocation() {
-    const status = document.getElementById("status");
-    status.textContent = "📡 Detecting location...";
+      const selectedLang = this.getAttribute('data-lang');
+      const selectedFlag = this.getAttribute('data-flag');
 
-    if (!navigator.geolocation) {
-      status.textContent = "❌ Geolocation not supported.";
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(showPosition, showError);
-  }
-
-  function showPosition(position) {
-  const lat = position.coords.latitude;
-  const lon = position.coords.longitude;
-
-  // Fill hidden fields
-  document.getElementById("latitude").value = lat;
-  document.getElementById("longitude").value = lon;
-
-  // Show map
-  const mapDiv = document.getElementById("map");
-  mapDiv.style.display = "block";
-
-  if (!map) {
-    map = L.map('map').setView([lat, lon], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-    marker = L.marker([lat, lon]).addTo(map);
-  } else {
-    map.setView([lat, lon], 13);
-    marker.setLatLng([lat, lon]);
-  }
-
-  // Reverse Geocoding
-  fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`)
-    .then(response => response.json())
-    .then(data => {
-      const address = data.display_name || '';
-      const city = data.address.city || data.address.town || data.address.village || '';
-      const country = data.address.country || '';
-      const pincode = data.address.postcode || '';
-
-      // Update fields
-      document.getElementById("city").value = city;
-      document.getElementById("country").value = country;
-      document.getElementById("confirmedAddress").value = address;
-
-      // Update status text
-      document.getElementById("status").textContent = `📍 ${city}, ${country}`;
-      document.getElementById("submit-btn").style.display = "block";
-
-      // Update dropdown label
-      const dropdownText = document.querySelector('#dropdownLocationText');
-      if (dropdownText) {
-        dropdownText.innerHTML = `<i class="bi bi-geo-alt-fill me-1"></i> ${city} ${pincode}`;
-      }
-
-      // ✅ Now enabled: save to backend
-      saveLocationToBackend(lat, lon);  // ✅ UNCOMMENTED
-    })
-    .catch(error => {
-      console.error("Reverse geocoding error:", error);
-      document.getElementById("status").textContent = "❌ Failed to reverse geocode.";
-      document.getElementById("submit-btn").style.display = "block";
+      document.getElementById('selected-lang').textContent = selectedLang;
+      document.getElementById('selected-flag').src = selectedFlag;
     });
-}
-function showError(error) {
-  const status = document.getElementById("status");
-  switch (error.code) {
-    case error.PERMISSION_DENIED:
-      status.textContent = "❌ User denied the request for Geolocation.";
-      break;
-    case error.POSITION_UNAVAILABLE:
-      status.textContent = "❌ Location information is unavailable.";
-      break;
-    case error.TIMEOUT:
-      status.textContent = "❌ The request to get user location timed out.";
-      break;
-    default:
-      status.textContent = "❌ An unknown error occurred.";
-      break;
-  }
-}
-function saveLocationToBackend(lat, lon) {
-  console.log("Sending to backend:", lat, lon);
-
-  fetch('/save-location/', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',  // critical for Django to detect JSON
-      'X-CSRFToken': getCookie('csrftoken')  // optional due to @csrf_exempt
-    },
-    body: JSON.stringify({
-      latitude: lat,
-      longitude: lon
-    })
-  })
-  .then(response => response.json())
-  .then(data => {
-    console.log('Backend response:', data);
-  })
-  .catch(error => {
-    console.error('Error saving location:', error);
-  });
-}
-
- function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
-
-
-  // Optional: animation logic for fading in product cards
-  document.addEventListener("DOMContentLoaded", function () {
-    const faders = document.querySelectorAll('.product-fade');
-
-    const observer = new IntersectionObserver((entries, observer) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-          observer.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.1 });
-
-    faders.forEach(el => observer.observe(el));
   });
 </script>
-
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

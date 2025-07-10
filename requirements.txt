@@ -159,3 +159,57 @@ whitenoise==6.9.0
 wsproto==1.2.0
 WTForms==2.3.3
 zstandard==0.23.0
+
+# --- Core Django ---
+Django==5.2.1
+dj-database-url==2.3.0
+django-allauth==65.9.0
+django-crispy-forms==2.4
+crispy-bootstrap5==2025.4
+django-debug-toolbar==5.2.0
+django-ckeditor==6.7.2
+django-js-asset==3.1.2
+django-taggit==6.1.0
+django-user-visit==2.0
+whitenoise==6.9.0
+gunicorn==21.2.0
+
+# --- ORM / DB ---
+psycopg2==2.9.10  # PostgreSQL
+mysqlclient==2.2.7  # Optional: MySQL support (don't use with psycopg2)
+# If only using PostgreSQL on Render, you can remove MySQL lines
+
+# --- Environment Management ---
+python-decouple==3.8
+python-dotenv==1.1.1
+
+# --- Social Auth / Login ---
+social-auth-app-django==5.4.3
+social-auth-core==4.6.1
+python-social-auth==0.3.6
+python3-openid==3.2.0
+PyJWT==2.10.1
+oauthlib==3.2.2
+requests-oauthlib==2.0.0
+
+# --- HTTP / API / Utils ---
+requests==2.32.3
+urllib3==2.4.0
+idna==3.10
+charset-normalizer==3.4.2
+
+# --- Image / File Handling ---
+pillow==11.1.0
+PyYAML==6.0.2
+
+# --- Deployment / Production ---
+gunicorn==21.2.0
+distro==1.9.0  # For OS detection on Linux
+whitenoise==6.9.0
+
+# --- Additional Tools (optional but useful) ---
+tzdata==2024.1
+MarkupSafe==3.0.2
+setuptools==80.9.0
+colorama==0.4.6
+typing_extensions==4.13.1

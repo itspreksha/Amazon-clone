@@ -10,7 +10,6 @@ body {
 nav.navbar {
     background-color: #131921 !important;
     color: white;
-    height: 50px;
 }
 
 .navbar-brand {
@@ -130,45 +129,3 @@ nav.navbar {
 .footer{
     background-color: #222;
 }
-.dropdown-menu {
-  z-index: 1050;
-  display: block !important;
-  visibility: visible !important;
-}
-
-.dropdown-menu:not(.show) {
-  display: none !important;
-}
-/* Remove white background under search bar */
-#suggestions {
-  background-color: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-/* Reduce spacing between categories */
-.categoryname h6 {
-  margin-top: 0.2rem;
-  margin-bottom: 0.2rem;
-}
-
-.category-icon {
-  margin-bottom: 0.1rem;
-}
-
-/* Optional: In your CSS */
-.search-bar-container {
-  background-color: transparent !important;
-  border: none !important;
- 
-}
-/* In your styles.css */
-.navbar form input,
-.navbar form select {
-  max-width: 120px;
-}
-.navbar form {
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
