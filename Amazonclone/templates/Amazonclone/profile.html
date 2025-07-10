@@ -1,0 +1,31 @@
+{% extends 'Amazonclone/base.html' %}
+{% load static %}
+
+{% block content %}
+<a class="navbar-brand text-warning fw-bold fs-5 animate-logo" href="{% url 'home' %}">
+   Amazon.in
+</a>
+
+<div class="container mt-4">
+    <h2 class="text-center" style="color: orange; font-weight: bold;">Your Profile</h2>
+    
+    <div class="text-center mt-3 mb-4">
+        <a href="{% url 'view_profile' %}" class="btn btn-outline-primary me-2">Profile</a>
+        <a href="{% url 'order_history' %}" class="btn btn-outline-secondary">Orders</a>
+    </div>
+
+    <div class="card shadow p-4">
+        <p><strong>Name:</strong> {{ request.user.username }}</p>
+        <p><strong>Email:</strong> {{ request.user.email }}</p>
+        <p><strong>Phone:</strong> {{ profile.phone|default:"Not Provided" }}</p>
+        <p><strong>City:</strong> {{ profile.city|default:"Not Provided" }}</p>
+        <p><strong>Address:</strong> {{ profile.address|default:"Not Provided" }}</p>
+
+        <div class="mt-4">
+            <a href="{% url 'edit_profile' %}" class="btn btn-primary me-2">Edit Profile</a>
+            <a href="{% url 'change_password' %}" class="btn btn-warning">Change Password</a>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

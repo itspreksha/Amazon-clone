@@ -1,0 +1,333 @@
+{% extends "Amazonclone/base.html" %}
+{% load static %}
+{% block content %}
+<head>
+<style>
+ body {
+  background: linear-gradient(270deg, #f9f9f9, #e0e0e0, #f9f9f9);
+  background-size: 600% 600%;
+  animation: bgAnimation 15s ease infinite;
+}
+
+@keyframes bgAnimation {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+
+.overlay {
+  background-color: rgba(255, 255, 255, 0.8);
+  min-height: 100vh;
+  padding: 20px;
+}
+
+
+  .product-container {
+    padding: 40px 20px;
+    max-width: 1140px;
+    margin: auto;
+  }
+
+  h2, h4 {
+    color: #1a1a1a;
+  }
+
+  .product-image {
+    width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    object-fit: contain;
+  }
+
+  .product-details {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.07);
+    margin-bottom: 40px;
+  }
+
+  .product-details p {
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  .product-details form select,
+  .product-details form input {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    width: 100%;
+  }
+
+  .btn {
+    border-radius: 30px;
+    padding: 10px 24px;
+    font-weight: 500;
+    transition: 0.3s ease;
+  }
+
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+
+  .review-box, .question-box {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+  }
+
+  .review-stars {
+    color: #ffcc00;
+    font-size: 1.3rem;
+    margin-bottom: 8px;
+  }
+
+  .review-form {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    max-width: 600px;
+    margin: 40px auto;
+    color: #222;
+  }
+
+  .review-form h4 {
+    font-weight: 600;
+    margin-bottom: 25px;
+    color: #ff6f00;
+  }
+
+  .review-form form label {
+    display: block;
+    font-weight: 500;
+    margin-top: 15px;
+    margin-bottom: 6px;
+  }
+
+  .review-form form input[type="text"],
+  .review-form form input[type="number"],
+  .review-form form textarea,
+  .review-form form input[type="file"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-size: 14px;
+    background-color: #fefefe;
+  }
+
+  .review-form form textarea {
+    resize: vertical;
+    min-height: 120px;
+  }
+
+  .review-form button {
+    margin-top: 20px;
+    padding: 10px 24px;
+    border-radius: 30px;
+    font-weight: 600;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    transition: 0.3s ease;
+  }
+
+  .review-form button:hover {
+    background-color: #218838;
+    transform: translateY(-1px);
+  }
+
+  .related-products .card {
+    border: 1px solid #eee;
+    border-radius: 12px;
+    transition: 0.3s;
+  }
+
+  .related-products .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+  }
+
+  .related-products .card img {
+    border-radius: 12px 12px 0 0;
+    height: 200px;
+    object-fit: cover;
+  }
+
+  hr {
+    margin: 40px 0 30px;
+  }
+
+  .question-answer {
+    background-color: #e6f4ea;
+    border-left: 5px solid #2e7d32;
+    padding: 10px 15px;
+    border-radius: 6px;
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+<div class="overlay">
+  <a class="navbar-brand text-warning fw-bold fs-5 animate-logo" href="{% url 'home' %}">
+   Amazon.in
+</a>
+
+<div class="container product-container">
+
+  <div class="row mb-4">
+    <div class="col-md-5" data-aos="fade-right">
+      <img src="{% static product.image %}" alt="{{ product.name }}" class="product-image">
+    </div>
+    <div class="col-md-7 product-details" data-aos="fade-left">
+
+  <h2>{{ product.name }}</h2>
+  <p>{{ product.description }}</p>
+ <p>Price: ₹{{ product.price }}</p>
+{% if product.price > product.base_price %}
+  <p style="color: green;"><strong>🔥 Increased due to popularity!</strong></p>
+{% endif %}
+
+  <p><small class="text-muted">Viewed {{ product.view_count }} times</small></p>
+
+      <p><strong>Specifications:</strong><br>{{ product.specifications }}</p>
+      <p><strong>Rating:</strong> {{ product.rating }}</p>
+
+      {% if product.stock > 0 %}
+        <p class="text-success fw-bold">In Stock: {{ product.stock }}</p>
+
+        <form method="post" action="{% url 'add_to_cart' product.id %}">
+          {% csrf_token %}
+          {% if sizes %}
+            <select name="size" required>
+              {% for size in sizes %}
+                <option value="{{ size }}">{{ size }}</option>
+              {% endfor %}
+            </select>
+          {% endif %}
+          {% if colors %}
+            <select name="color" required>
+              {% for color in colors %}
+                <option value="{{ color }}">{{ color }}</option>
+              {% endfor %}
+            </select>
+          {% endif %}
+          <input type="number" name="quantity" value="1" min="1" required>
+          <button type="submit" class="btn btn-success mt-2">Add to Cart</button>
+        </form>
+      {% else %}
+        <p class="text-danger fw-bold">Out of stock</p>
+        {% if user.is_authenticated %}
+          <form method="post" action="{% url 'notify_me' product.id %}">
+            {% csrf_token %}
+            <button class="btn btn-warning mt-2">Notify me</button>
+          </form>
+        {% else %}
+          <p><a href="{% url 'login' %}">Login</a> to be notified.</p>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+
+  {% if reviews %}
+    <hr>
+    <h4 data-aos="fade-up">Customer Reviews</h4>
+    {% for review in reviews %}
+      <div class="review-box" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:'1' }}00">
+        <strong>{{ review.user.username }}</strong>
+        <div class="review-stars">
+          {% for _ in "12345"|make_list %}
+            {% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}
+          {% endfor %}
+        </div>
+        <p>{{ review.comment }}</p>
+        <small class="text-muted">{{ review.created_at }}</small>
+        {% if review.image %}
+          <img src="{{ review.image.url }}" alt="Review Image" class="img-thumbnail mt-2" style="max-height:200px;">
+        {% endif %}
+      </div>
+    {% endfor %}
+  {% else %}
+    <p class="text-muted">No reviews yet.</p>
+  {% endif %}
+
+  {% if user.is_authenticated %}
+    <div class="review-form" data-aos="fade-up">
+      <h4>Leave a Review</h4>
+      <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <label for="id_rating">Rating:</label>
+        {{ review_form.rating }}
+
+        <label for="id_comment">Comment:</label>
+        {{ review_form.comment }}
+
+        <label for="id_image">Image:</label>
+        {{ review_form.image }}
+
+        <button type="submit" name="submit_review">Submit Review</button>
+      </form>
+    </div>
+  {% endif %}
+
+  {% if related_products %}
+    <hr>
+    <h4 class="mt-5" data-aos="fade-up">Related Products</h4>
+    <div class="row related-products">
+      {% for r in related_products %}
+        <div class="col-md-3 mb-4" data-aos="zoom-in" data-aos-delay="{{ forloop.counter0|add:'1' }}00">
+          <div class="card h-100">
+            <img src="{% static r.image %}" class="card-img-top" alt="{{ r.name }}">
+            <div class="card-body text-center">
+              <h6>{{ r.name }}</h6>
+              <p class="text-success fw-bold">₹{{ r.price }}</p>
+              <a href="{% url 'product_detail' product_id=r.id %}" class="btn btn-outline-primary btn-sm">View</a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if user.is_authenticated %}
+    <div class="question-form" data-aos="fade-up">
+      <h4>Ask a Question</h4>
+      <form method="POST">
+        {% csrf_token %}
+        {{ question_form.as_p }}
+        <button type="submit" name="submit_question" class="btn btn-info">Submit Question</button>
+      </form>
+    </div>
+  {% else %}
+    <p><a href="{% url 'login' %}">Login</a> to ask a question or review</p>
+  {% endif %}
+
+  <hr>
+  <h4 class="mt-5" data-aos="fade-up">Questions & Answers</h4>
+  {% for question in questions %}
+    <div class="question-box" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:'1' }}00">
+      <strong>{{ question.user.username }}</strong> asked:
+      <p>{{ question.question_text }}</p>
+      {% if question.answer %}
+        <div class="question-answer"><strong>Answer:</strong> {{ question.answer }}</div>
+      {% else %}
+        <p class="text-muted"><em>No answer yet</em></p>
+      {% endif %}
+    </div>
+  {% empty %}
+    <p class="text-muted">No questions yet.</p>
+  {% endfor %}
+</div>
+</div>
+</body>
+{% endblock content %}
+
+this ismy product_detail.html

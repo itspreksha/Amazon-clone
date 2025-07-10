@@ -1,0 +1,13 @@
+{% extends "Amazonclone/base.html" %}
+{% block content %}
+<a class="navbar-brand text-warning fw-bold fs-5 animate-logo" href="{% url 'home' %}">
+   Amazon.in
+</a>
+
+<div class="container mt-5 text-center">
+  <h2 class="text-success">Payment Successful!</h2>
+  <p>Thank you for your purchase.</p>
+  <p><strong>Order ID:</strong> {{ order.id }}</p>
+  <a href="{% url 'home' %}" class="btn btn-primary mt-3">Continue Shopping</a>
+</div>
+{% endblock %}
