@@ -8,7 +8,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Security
 DEBUG = config('DEBUG', default=True, cast=bool)
 SECRET_KEY = config('SECRET_KEY')
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost', cast=Csv())
+ALLOWED_HOSTS = [*]
 COD_ALLOWED_PINCODES = ['380001', '110001', '560001', '380013']
 
 ACCOUNT_LOGIN_METHODS = {'username', 'email'}
