@@ -1,8 +1,11 @@
 Assignment 1 : Software Design and Testing
+
 Name : Preksha Joshi
+
 Id : 202412029
 
 Project Title: Amazon Clone – A Scalable E-commerce Platform
+
 This document outlines the key concepts and components used in the Amazon Clone project. The system is described using three sections: Objects, Context, and Information (as per context) to clearly communicate the structure and behavior of the platform.
 
 ## Objects : 
