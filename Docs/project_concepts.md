@@ -76,37 +76,37 @@ Default shipping address selection :
 
 User Signup & Verification :
 
-username, email, password, otp, is_verified, phone, city, state, pincode
+→ username, email, password, otp, is_verified, phone, city, state, pincode
 
 Adding to Cart :
 
-user_id, product_id, size, color, quantity
+→ user_id, product_id, size, color, quantity
 
 Placing an Order :
 
-user_id, order_date, order_items (with product names, prices, quantities),
+→ user_id, order_date, order_items (with product names, prices, quantities),
 total_price, payment_method, payment_status, shipping_address
 
 Product Review :
 
-rating, comment, image, user_id, product_id, timestamp
+→ rating, comment, image, user_id, product_id, timestamp
 
 Product Questions :
 
-question_text, answer, asked_at, answered_at, user_id, product_id
+→ question_text, answer, asked_at, answered_at, user_id, product_id
 
 Payments :
 
-razorpay_order_id, payment_id, payment_method, payment_status
+→ razorpay_order_id, payment_id, payment_method, payment_status
 
 Stock Notification :
 
-product_id, user_id, notified status, email sent timestamp
+→ product_id, user_id, notified status, email sent timestamp
 
 User Location Tracking :
 
-latitude, longitude, city, country, last_updated
+→ latitude, longitude, city, country, last_updated
 
 Address Management :
 
-name, phone, pincode, address_line, city, state, address_type, is_default
+→ name, phone, pincode, address_line, city, state, address_type, is_default
