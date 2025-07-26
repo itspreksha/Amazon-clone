@@ -36,59 +36,77 @@ UserLocation → Tracks user’s geolocation (city, country, lat/lon)
 
 ## Context :
 
-User signup & verification
+User signup & verification :
+
 → Involves User, Profile, and OTPVerification
 
-Adding products to cart
+Adding products to cart :
+
 → Involves User, Cart, and Product (with optional size & color)
 
-Placing an order
+Placing an order :
+
 → Involves Order, OrderItem, Product, User, and Address
 
-Reviewing a product
+Reviewing a product :
+
 → Involves User, Product, and Review
 
-Asking questions about a product
+Asking questions about a product :
+
 → Involves User, Product, and ProductQuestion
 
-Handling payments
+Handling payments :
+
 → Involves Order fields like razorpay_order_id, payment_status
 
-Notifying users about restocked items
+Notifying users about restocked items :
+
 → Involves StockNotification, Product, and send_mail
 
-Tracking user location
+Tracking user location :
+
 → Involves UserLocation and User
 
-Default shipping address selection
+Default shipping address selection :
+
 → Involves Profile and Address
 
 ## Information (as per context):
 
-User Signup & Verification
+User Signup & Verification :
+
 username, email, password, otp, is_verified, phone, city, state, pincode
 
-Adding to Cart
+Adding to Cart :
+
 user_id, product_id, size, color, quantity
 
-Placing an Order
+Placing an Order :
+
 user_id, order_date, order_items (with product names, prices, quantities),
 total_price, payment_method, payment_status, shipping_address
 
-Product Review
+Product Review :
+
 rating, comment, image, user_id, product_id, timestamp
 
-Product Questions
+Product Questions :
+
 question_text, answer, asked_at, answered_at, user_id, product_id
 
-Payments
+Payments :
+
 razorpay_order_id, payment_id, payment_method, payment_status
 
-Stock Notification
+Stock Notification :
+
 product_id, user_id, notified status, email sent timestamp
 
-User Location Tracking
+User Location Tracking :
+
 latitude, longitude, city, country, last_updated
 
-Address Management
+Address Management :
+
 name, phone, pincode, address_line, city, state, address_type, is_default
