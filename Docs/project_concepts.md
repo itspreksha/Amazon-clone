@@ -8,16 +8,27 @@ This document outlines the key concepts and components used in the Amazon Clone 
 ## Objects : 
 
 User → A person registered on the platform (using Django’s built-in User model)
+
 Profile → Extended user information like phone, address, and OTP
+
 Product → An item listed for sale (with price, stock, specs, etc.)
+
 Cart → Temporary collection of products a user intends to purchase
+
 Order → A confirmed purchase made by the user
+
 OrderItem → Individual item entries in an order
+
 Review → Feedback with rating and comment submitted by users
+
 ProductQuestion → User-submitted product inquiries, optionally answered
+
 Address → Shipping/billing location linked to a user
+
 OTPVerification → Stores and validates OTPs for account verification
+
 StockAlert / StockNotification → Tracks user interest in out-of-stock products
+
 UserLocation → Tracks user’s geolocation (city, country, lat/lon)
 
 ## Context :
