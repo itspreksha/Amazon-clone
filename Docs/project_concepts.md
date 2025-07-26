@@ -2,90 +2,79 @@ Assignment 1 : Software Design and Testing
 Name : Preksha Joshi
 Id : 202412029
 
-AmazonClone - Project Concepts
+Project Title: Amazon Clone – A Scalable E-commerce Platform
+This document outlines the key concepts and components used in the Amazon Clone project. The system is described using three sections: Objects, Context, and Information (as per context) to clearly communicate the structure and behavior of the platform.
 
---> Objects,Context and Information
+## Objects : 
 
-1. Product
-#Context-
---> Product listing, detail page, stock updates, price updates.
+User → A person registered on the platform (using Django’s built-in User model)
+Profile → Extended user information like phone, address, and OTP
+Product → An item listed for sale (with price, stock, specs, etc.)
+Cart → Temporary collection of products a user intends to purchase
+Order → A confirmed purchase made by the user
+OrderItem → Individual item entries in an order
+Review → Feedback with rating and comment submitted by users
+ProductQuestion → User-submitted product inquiries, optionally answered
+Address → Shipping/billing location linked to a user
+OTPVerification → Stores and validates OTPs for account verification
+StockAlert / StockNotification → Tracks user interest in out-of-stock products
+UserLocation → Tracks user’s geolocation (city, country, lat/lon)
 
-#Information- 
---> name, description, category, price, stock
---> Dynamic price adjustment based on views
---> Notification system when product is back in stock
---> Related to: Review, ProductQuestion, Cart, OrderItem
+## Context :
 
-2. Profile
-#Context-
---> User Profile Management, Order history, Verification
+User signup & verification
+→ Involves User, Profile, and OTPVerification
 
-#Information-
---> Phone, City, State, Pincode, Address, Email_verified
---> Default_address, is_blocked
+Adding products to cart
+→ Involves User, Cart, and Product (with optional size & color)
 
-3. OTPVerification
-#Context-
---> User registration, password recovery
+Placing an order
+→ Involves Order, OrderItem, Product, User, and Address
 
-#Information-
---> OTP, expires_at, verified
+Reviewing a product
+→ Involves User, Product, and Review
 
-4. Order
-#Context-
---> Checkout, order tracking, payment
+Asking questions about a product
+→ Involves User, Product, and ProductQuestion
 
-#Information-
---> Status, total_price, payment_id, payment_method, payment_status
---> Related to: OrderItem
+Handling payments
+→ Involves Order fields like razorpay_order_id, payment_status
 
-5. OrderItem
-#Context-
---> Inside an Order
+Notifying users about restocked items
+→ Involves StockNotification, Product, and send_mail
 
-#Information-
---> product_name, price, quantity
+Tracking user location
+→ Involves UserLocation and User
 
-6. Review
-#Context-
---> product_feedback, star rating display
+Default shipping address selection
+→ Involves Profile and Address
 
-#Information-
---> rating, comment, created_at
---> related to: product, user
+## Information (as per context):
 
-7. ProductQuestion
-#Context-
---> Q&A section of product
+User Signup & Verification
+username, email, password, otp, is_verified, phone, city, state, pincode
 
-#Information-
---> Question_text, answer, asked_at, answered_at
+Adding to Cart
+user_id, product_id, size, color, quantity
 
-8. Address
-#Context-
---> Checkout, Profile settings
+Placing an Order
+user_id, order_date, order_items (with product names, prices, quantities),
+total_price, payment_method, payment_status, shipping_address
 
-#Information-
---> name, phone, pincode, address_line, city, state, address_type, is_default
+Product Review
+rating, comment, image, user_id, product_id, timestamp
 
-9. Cart
-#Context-
---> Before Checkout, product preview
+Product Questions
+question_text, answer, asked_at, answered_at, user_id, product_id
 
-#Information-
---> product, size, color, quantity
+Payments
+razorpay_order_id, payment_id, payment_method, payment_status
 
-10. StockAlert & StockNotification
-#Context-
---> When product is restocked
+Stock Notification
+product_id, user_id, notified status, email sent timestamp
 
-#Information-
---> notified, created_at
---> Triggers email alerts
+User Location Tracking
+latitude, longitude, city, country, last_updated
 
-11. UserLocation
-#Context-
---> Location-aware services, City Specific delivery
-
-#Information-
---> latitude, longitude, city, country, updated_at
+Address Management
+name, phone, pincode, address_line, city, state, address_type, is_default
